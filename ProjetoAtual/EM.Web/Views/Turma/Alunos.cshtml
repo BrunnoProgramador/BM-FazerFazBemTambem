@@ -1,0 +1,164 @@
+@model EM.Web.Models.TurmaModel
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.Nome</h1>
+        <p class="page-desc">Detalhes da turma e gestão dos alunos matriculados.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Encontro" asp-action="Registrar" asp-route-turma="@Model.Codigo" class="btn btn-primary">
+            <i class="bi bi-check2-square me-1"></i> Registrar presença
+        </a>
+        <a asp-controller="Turma" asp-action="Editar" asp-route-id="@Model.Codigo"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i> Editar
+        </a>
+        <a asp-controller="Turma" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="info-grid">
+    <div class="info-item">
+        <div class="info-rotulo">Ano letivo</div>
+        <div class="info-valor">@Model.Ano</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Alunos</div>
+        <div class="info-valor">@Model.Alunos.Count</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Professor</div>
+        <div class="info-valor">@(string.IsNullOrWhiteSpace(Model.Professor) ? "—" : Model.Professor)</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Dias da semana</div>
+        <div class="info-valor">@(string.IsNullOrWhiteSpace(Model.DiasSemana) ? "—" : Model.DiasSemana)</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Horário</div>
+        <div class="info-valor">@(string.IsNullOrWhiteSpace(Model.Horario) ? "—" : Model.Horario)</div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Alunos na turma -->
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="panel-body pb-0">
+                <h2 class="panel-titulo">
+                    Alunos na turma
+                    <span class="badge-suave badge-azul ms-1">@Model.Alunos.Count</span>
+                </h2>
+            </div>
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nome</th>
+                        <th class="col-acoes"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Alunos.Any())
+                    {
+                        @foreach (var a in Model.Alunos)
+                        {
+                            <tr>
+                                <td>@a.Matricula</td>
+                                <td>@a.Nome</td>
+                                <td class="col-acoes">
+                                    <button type="button" class="btn-icone perigo btn-remover-aluno"
+                                            title="Remover da turma"
+                                            data-url="@Url.Action("RemoverAluno", "Turma", new { turmaCodigo = Model.Codigo, matricula = a.Matricula })"
+                                            data-nome="@a.Nome">
+                                        <i class="bi bi-person-dash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3">
+                                <div class="estado-vazio py-4">
+                                    <p class="mb-0">Nenhum aluno na turma. Adicione ao lado.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Adicionar aluno -->
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-body pb-0">
+                <h2 class="panel-titulo">
+                    Adicionar aluno
+                    <span class="badge-suave badge-cinza ms-1">@Model.AlunosForaDaTurma.Count disponível(is)</span>
+                </h2>
+                <input type="text" id="buscaDisponiveis" class="form-control form-control-sm mb-2"
+                       placeholder="Pesquisar aluno..." />
+            </div>
+            <table class="table-clean" id="tabelaDisponiveis">
+                <tbody>
+                    @if (Model.AlunosForaDaTurma.Any())
+                    {
+                        @foreach (var a in Model.AlunosForaDaTurma)
+                        {
+                            <tr data-busca="@a.Nome.ToLowerInvariant()">
+                                <td>@a.Matricula</td>
+                                <td>@a.Nome</td>
+                                <td class="col-acoes">
+                                    <button type="button" class="btn-icone btn-adicionar-aluno"
+                                            title="Adicionar à turma"
+                                            data-url="@Url.Action("AdicionarAluno", "Turma", new { turmaCodigo = Model.Codigo, matricula = a.Matricula })">
+                                        <i class="bi bi-person-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                <div class="estado-vazio py-4">
+                                    <p class="mb-0">Todos os alunos já estão na turma.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".btn-remover-aluno").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url, `Remover "${btn.dataset.nome}" da turma?`)));
+
+        document.querySelectorAll(".btn-adicionar-aluno").forEach(btn =>
+            btn.addEventListener("click", () => postar(btn.dataset.url)));
+
+        const buscaDisp = document.getElementById("buscaDisponiveis");
+        buscaDisp?.addEventListener("input", () => {
+            const termo = buscaDisp.value.trim().toLowerCase();
+            document.querySelectorAll("#tabelaDisponiveis tbody tr[data-busca]").forEach(tr => {
+                tr.style.display = !termo || tr.dataset.busca.includes(termo) ? "" : "none";
+            });
+        });
+    </script>
+}

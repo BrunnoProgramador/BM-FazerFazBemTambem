@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EM.Domain/EM.Domain.csproj" />
+  <Project Path="EM.Repository/EM.Repository.csproj" />
+  <Project Path="EM.Web/EM.Web.csproj" />
+  <Project Path="EM.Testes/EM.Testes.csproj" />
+</Solution>

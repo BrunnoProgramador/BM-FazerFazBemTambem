@@ -1,0 +1,49 @@
+@model EM.Web.Models.EventoModel
+@{
+    bool ehEdicao = Model != null && Model.Codigo > 0;
+    ViewData["Title"] = ehEdicao ? "Editar evento" : "Novo evento";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-desc">
+            @(ehEdicao ? "Altere os dados do evento e salve." : "Ex: passeio, piquenique, festa junina, natal...")
+        </p>
+    </div>
+</div>
+
+<div class="panel form-painel">
+    <div class="panel-body">
+        <form asp-controller="Evento" asp-action="@(ehEdicao ? "Atualize" : "Gravar")" method="post">
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+                 style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+            <input type="hidden" asp-for="Codigo" />
+
+            <div class="row">
+                <div class="mb-3 col-md-8">
+                    <label asp-for="Nome" class="form-label">Nome do evento</label>
+                    <input asp-for="Nome" class="form-control" placeholder="Ex: Festa Junina 2026" maxlength="100" />
+                </div>
+                <div class="mb-3 col-md-4">
+                    <label asp-for="Data" class="form-label">Data</label>
+                    <input asp-for="Data" type="date" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Observacao" class="form-label">Observação <span class="text-muted fw-normal">(opcional)</span></label>
+                <input asp-for="Observacao" class="form-control" placeholder="Local, horário, o que levar..." maxlength="200" />
+            </div>
+
+            <div class="form-acoes">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+                <a asp-controller="Evento" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

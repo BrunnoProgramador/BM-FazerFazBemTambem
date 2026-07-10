@@ -1,0 +1,101 @@
+@model IEnumerable<EM.Web.Models.EventoModel>
+@{
+    ViewData["Title"] = "Eventos";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Eventos</h1>
+        <p class="page-desc">Passeios, festas e atividades especiais do projeto.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Evento" asp-action="Edite" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Novo evento
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="text" id="filtroBusca" class="form-control filtro-busca"
+           placeholder="Pesquisar evento..." />
+</div>
+
+<div class="panel">
+    <table class="table-clean" id="tabelaEventos">
+        <thead>
+            <tr>
+                <th>Evento</th>
+                <th>Data</th>
+                <th>Participantes</th>
+                <th>Observação</th>
+                <th class="col-acoes">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var e in Model)
+                {
+                    <tr data-busca="@e.Nome.ToLowerInvariant()">
+                        <td>
+                            <a asp-controller="Evento" asp-action="Participantes" asp-route-id="@e.Codigo">
+                                @e.Nome
+                            </a>
+                        </td>
+                        <td>@e.Data.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge-suave badge-azul">@e.TotalParticipantes aluno(s)</span>
+                        </td>
+                        <td>@(string.IsNullOrWhiteSpace(e.Observacao) ? "—" : e.Observacao)</td>
+                        <td class="col-acoes">
+                            <a asp-controller="Evento" asp-action="Participantes" asp-route-id="@e.Codigo"
+                               class="btn-icone" title="Gerenciar participantes">
+                                <i class="bi bi-people"></i>
+                            </a>
+                            <a asp-controller="Evento" asp-action="Editar" asp-route-id="@e.Codigo"
+                               class="btn-icone" title="Editar evento">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn-icone perigo btn-excluir-evento"
+                                    title="Excluir evento"
+                                    data-url="@Url.Action("Excluir", "Evento", new { id = e.Codigo })"
+                                    data-nome="@e.Nome">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="estado-vazio">
+                            <i class="bi bi-calendar-event"></i>
+                            <p>Nenhum evento cadastrado ainda.</p>
+                            <a asp-controller="Evento" asp-action="Edite" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i> Criar o primeiro evento
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById("filtroBusca")?.addEventListener("input", function () {
+            const termo = this.value.trim().toLowerCase();
+            document.querySelectorAll("#tabelaEventos tbody tr[data-busca]").forEach(tr => {
+                tr.style.display = !termo || tr.dataset.busca.includes(termo) ? "" : "none";
+            });
+        });
+
+        document.querySelectorAll(".btn-excluir-evento").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url,
+                    `Excluir o evento "${btn.dataset.nome}"? A lista de participantes será apagada.`)));
+    </script>
+}

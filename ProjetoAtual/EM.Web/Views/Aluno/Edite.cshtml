@@ -1,0 +1,130 @@
+@using EM.Domain.Utilitarios
+@model EM.Web.Models.AlunoModel
+
+@{
+    bool ehEdicao = Model != null && Model.Matricula > 0;
+    ViewData["Title"] = ehEdicao ? "Editar aluno" : "Novo aluno";
+    bool mascSelecionado = Model?.Sexo?.Codigo == EnumeradorSexo.Masculino.Codigo;
+    bool femSelecionado  = Model?.Sexo?.Codigo == EnumeradorSexo.Feminino.Codigo;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-desc">
+            @(ehEdicao ? "Altere os dados da criança e salve." : "Preencha os dados para cadastrar uma nova criança no projeto.")
+        </p>
+    </div>
+</div>
+
+<div class="panel form-painel">
+    <div class="panel-body">
+        <form asp-controller="Aluno" asp-action="@(ehEdicao ? "Atualize" : "Gravar")" method="post">
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+                 style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+            <input type="hidden" asp-for="Matricula" />
+
+            <div class="mb-3">
+                <label asp-for="Nome" class="form-label">Nome completo</label>
+                <input asp-for="Nome" class="form-control" placeholder="Digite o nome da criança" />
+            </div>
+
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <label asp-for="DataNascimento" class="form-label">Data de nascimento</label>
+                    <input asp-for="DataNascimento" type="date" class="form-control" />
+                </div>
+                <div class="mb-3 col-md-4">
+                    <label class="form-label">Sexo</label>
+                    <select name="sexo" class="form-select" required>
+                        <option value="">Selecione</option>
+                        <option value="@EnumeradorSexo.Masculino.Codigo" selected="@mascSelecionado">Masculino</option>
+                        <option value="@EnumeradorSexo.Feminino.Codigo" selected="@femSelecionado">Feminino</option>
+                    </select>
+                </div>
+                <div class="mb-3 col-md-4">
+                    <label asp-for="CPF" class="form-label">CPF <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input asp-for="CPF" class="form-control" placeholder="000.000.000-00" id="cpf" maxlength="14" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="mb-3 col-md-6">
+                    <label asp-for="Cidade" class="form-label">Cidade <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input asp-for="Cidade" class="form-control" placeholder="Ex: São Paulo - SP" maxlength="100" />
+                </div>
+                <div class="mb-3 col-md-6">
+                    <label asp-for="Bairro" class="form-label">Bairro <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input asp-for="Bairro" class="form-control" placeholder="Ex: Jardim das Flores" maxlength="100" />
+                </div>
+            </div>
+
+            <hr class="my-3" style="border-color: var(--em-borda);" />
+            <h2 class="panel-titulo">Responsável</h2>
+
+            <div class="row">
+                <div class="mb-3 col-md-5">
+                    <label asp-for="ResponsavelNome" class="form-label">Nome</label>
+                    <input asp-for="ResponsavelNome" class="form-control" placeholder="Nome do responsável" maxlength="100" />
+                </div>
+                <div class="mb-3 col-md-4">
+                    <label asp-for="ResponsavelTelefone" class="form-label">Telefone</label>
+                    <input asp-for="ResponsavelTelefone" class="form-control" placeholder="(00) 00000-0000" maxlength="20" />
+                </div>
+                <div class="mb-3 col-md-3">
+                    <label asp-for="ResponsavelParentesco" class="form-label">Parentesco</label>
+                    <input asp-for="ResponsavelParentesco" class="form-control" placeholder="Mãe, pai, avó..." maxlength="50" list="parentescos" />
+                    <datalist id="parentescos">
+                        <option value="Mãe"></option>
+                        <option value="Pai"></option>
+                        <option value="Avó"></option>
+                        <option value="Avô"></option>
+                        <option value="Tia"></option>
+                        <option value="Tio"></option>
+                        <option value="Irmã(o)"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            @if (ehEdicao)
+            {
+                <div class="mb-3 col-md-5">
+                    <label class="form-label">Status no projeto</label>
+                    <select name="status" class="form-select">
+                        @foreach (var s in EnumeradorStatusAluno.Todos)
+                        {
+                            <option value="@s.Codigo" selected="@(Model!.Status.Codigo == s.Codigo)">@s.Descricao</option>
+                        }
+                    </select>
+                    <div class="form-dica">Prefira mudar o status em vez de excluir o cadastro.</div>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" name="status" value="0" />
+            }
+
+            <div class="form-acoes">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+                <a asp-controller="Aluno" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Máscara de CPF
+        document.getElementById("cpf").addEventListener("input", function () {
+            let v = this.value.replace(/\D/g, "");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            this.value = v;
+        });
+    </script>
+}

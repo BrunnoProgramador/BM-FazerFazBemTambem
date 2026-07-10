@@ -1,0 +1,130 @@
+@model IEnumerable<EM.Web.Models.TurmaModel>
+@{
+    ViewData["Title"] = "Turmas";
+    var anos = Model?.Select(t => t.Ano).Distinct().OrderByDescending(a => a).ToList() ?? new List<int>();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Turmas</h1>
+        <p class="page-desc">Grupos do projeto — por idade, atividade ou reforço.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Turma" asp-action="Edite" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nova turma
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="text" id="filtroBusca" class="form-control filtro-busca"
+           placeholder="Pesquisar turma ou professor..." />
+    <select id="filtroAno" class="form-select" aria-label="Filtrar por ano">
+        <option value="">Todos os anos</option>
+        @foreach (var ano in anos)
+        {
+            <option value="@ano">@ano</option>
+        }
+    </select>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="cards-grid" id="gradeTurmas">
+        @foreach (var t in Model)
+        {
+            <div class="card-turma"
+                 data-busca="@($"{t.Nome} {t.Professor}".ToLowerInvariant())"
+                 data-ano="@t.Ano">
+                <div class="card-turma-topo">
+                    <h3 class="card-turma-nome">@t.Nome</h3>
+                    <span class="badge-suave badge-azul">@t.Ano</span>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(t.Professor))
+                {
+                    <div class="card-turma-meta"><i class="bi bi-person"></i> @t.Professor</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(t.DiasSemana) || !string.IsNullOrWhiteSpace(t.Horario))
+                {
+                    <div class="card-turma-meta">
+                        <i class="bi bi-calendar-week"></i>
+                        @t.DiasSemana@(!string.IsNullOrWhiteSpace(t.DiasSemana) && !string.IsNullOrWhiteSpace(t.Horario) ? " · " : "")@t.Horario
+                    </div>
+                }
+                <div class="card-turma-meta">
+                    <i class="bi bi-mortarboard"></i> @t.TotalAlunos aluno(s)
+                </div>
+
+                <div class="card-turma-acoes">
+                    <a asp-controller="Turma" asp-action="Alunos" asp-route-id="@t.Codigo"
+                       class="btn btn-sm btn-outline-secondary flex-grow-1">
+                        Ver alunos
+                    </a>
+                    <a asp-controller="Turma" asp-action="Editar" asp-route-id="@t.Codigo"
+                       class="btn-icone" title="Editar turma">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn-icone perigo btn-excluir-turma" title="Excluir turma"
+                            data-url="@Url.Action("Excluir", "Turma", new { id = t.Codigo })"
+                            data-nome="@t.Nome">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="panel d-none" id="semResultados">
+        <div class="estado-vazio">
+            <i class="bi bi-search"></i>
+            <p>Nenhuma turma corresponde aos filtros.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="panel">
+        <div class="estado-vazio">
+            <i class="bi bi-people"></i>
+            <p>Nenhuma turma cadastrada ainda.</p>
+            <a asp-controller="Turma" asp-action="Edite" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Criar a primeira turma
+            </a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const busca = document.getElementById("filtroBusca");
+        const filtroAno = document.getElementById("filtroAno");
+        const grade = document.getElementById("gradeTurmas");
+        const vazio = document.getElementById("semResultados");
+
+        function aplicarFiltros() {
+            if (!grade) return;
+            const termo = busca.value.trim().toLowerCase();
+            const ano = filtroAno.value;
+            let visiveis = 0;
+
+            grade.querySelectorAll(".card-turma").forEach(card => {
+                const bateBusca = !termo || card.dataset.busca.includes(termo);
+                const bateAno = !ano || card.dataset.ano === ano;
+                const mostra = bateBusca && bateAno;
+                card.style.display = mostra ? "" : "none";
+                if (mostra) visiveis++;
+            });
+
+            vazio.classList.toggle("d-none", visiveis > 0);
+        }
+
+        busca?.addEventListener("input", aplicarFiltros);
+        filtroAno?.addEventListener("change", aplicarFiltros);
+
+        document.querySelectorAll(".btn-excluir-turma").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url,
+                    `Excluir a turma "${btn.dataset.nome}"? Os alunos serão desvinculados.`)));
+    </script>
+}

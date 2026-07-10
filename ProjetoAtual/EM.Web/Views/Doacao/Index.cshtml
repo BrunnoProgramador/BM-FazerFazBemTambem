@@ -1,0 +1,90 @@
+@model IEnumerable<EM.Web.Models.DoacaoModel>
+@{
+    ViewData["Title"] = "Doações";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Doações</h1>
+        <p class="page-desc">Registro do que o projeto recebeu e de quem doou.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Doacao" asp-action="Edite" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Registrar doação
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="text" id="filtroBusca" class="form-control filtro-busca"
+           placeholder="Pesquisar item ou doador..." />
+</div>
+
+<div class="panel">
+    <table class="table-clean" id="tabelaDoacoes">
+        <thead>
+            <tr>
+                <th>Recebido</th>
+                <th>Quantidade</th>
+                <th>Data</th>
+                <th>Quem doou</th>
+                <th class="col-acoes">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var d in Model)
+                {
+                    <tr data-busca="@($"{d.Item} {d.Doador}".ToLowerInvariant())">
+                        <td>@d.Item</td>
+                        <td>@(d.Quantidade?.ToString() ?? "—")</td>
+                        <td>@d.Data.ToString("dd/MM/yyyy")</td>
+                        <td>@(string.IsNullOrWhiteSpace(d.Doador) ? "—" : d.Doador)</td>
+                        <td class="col-acoes">
+                            <a asp-controller="Doacao" asp-action="Editar" asp-route-id="@d.Codigo"
+                               class="btn-icone" title="Editar doação">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn-icone perigo btn-excluir-doacao"
+                                    title="Excluir doação"
+                                    data-url="@Url.Action("Excluir", "Doacao", new { id = d.Codigo })"
+                                    data-nome="@d.Item">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="estado-vazio">
+                            <i class="bi bi-box-seam"></i>
+                            <p>Nenhuma doação registrada ainda.</p>
+                            <a asp-controller="Doacao" asp-action="Edite" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i> Registrar a primeira doação
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById("filtroBusca")?.addEventListener("input", function () {
+            const termo = this.value.trim().toLowerCase();
+            document.querySelectorAll("#tabelaDoacoes tbody tr[data-busca]").forEach(tr => {
+                tr.style.display = !termo || tr.dataset.busca.includes(termo) ? "" : "none";
+            });
+        });
+
+        document.querySelectorAll(".btn-excluir-doacao").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url, `Excluir a doação "${btn.dataset.nome}"?`)));
+    </script>
+}

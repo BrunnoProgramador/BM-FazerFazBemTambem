@@ -1,0 +1,55 @@
+@model EM.Web.Models.DoacaoModel
+@{
+    bool ehEdicao = Model != null && Model.Codigo > 0;
+    ViewData["Title"] = ehEdicao ? "Editar doação" : "Registrar doação";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-desc">
+            @(ehEdicao ? "Altere os dados da doação e salve." : "Ex: 50 cadernos, 30 lápis, 20 livros...")
+        </p>
+    </div>
+</div>
+
+<div class="panel form-painel">
+    <div class="panel-body">
+        <form asp-controller="Doacao" asp-action="@(ehEdicao ? "Atualize" : "Gravar")" method="post">
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+                 style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+            <input type="hidden" asp-for="Codigo" />
+
+            <div class="row">
+                <div class="mb-3 col-md-8">
+                    <label asp-for="Item" class="form-label">Item recebido</label>
+                    <input asp-for="Item" class="form-control" placeholder="Ex: cadernos, cestas básicas..." maxlength="150" />
+                </div>
+                <div class="mb-3 col-md-4">
+                    <label asp-for="Quantidade" class="form-label">Quantidade <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input asp-for="Quantidade" type="number" class="form-control" min="1" placeholder="Ex: 50" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <label asp-for="Data" class="form-label">Data</label>
+                    <input asp-for="Data" type="date" class="form-control" />
+                </div>
+                <div class="mb-3 col-md-8">
+                    <label asp-for="Doador" class="form-label">Quem doou <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input asp-for="Doador" class="form-control" placeholder="Nome da pessoa ou empresa" maxlength="100" />
+                </div>
+            </div>
+
+            <div class="form-acoes">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+                <a asp-controller="Doacao" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

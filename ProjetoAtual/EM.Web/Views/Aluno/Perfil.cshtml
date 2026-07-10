@@ -1,0 +1,228 @@
+@using EM.Domain.Utilitarios
+@model EM.Web.Models.PerfilAlunoModel
+@{
+    var a = Model.Aluno;
+    ViewData["Title"] = a.Nome;
+    var local = string.Join(", ",
+        new[] { a.Bairro, a.Cidade }.Where(p => !string.IsNullOrWhiteSpace(p)));
+    var responsavel = string.IsNullOrWhiteSpace(a.ResponsavelNome)
+        ? "—"
+        : a.ResponsavelNome + (string.IsNullOrWhiteSpace(a.ResponsavelParentesco) ? "" : $" ({a.ResponsavelParentesco})");
+}
+
+<div class="page-header">
+    <div>
+        <div class="perfil-cabecalho">
+            <h1 class="page-title">@a.Nome</h1>
+            <span class="badge-suave @(a.Status.Codigo == 0 ? "badge-verde" : "badge-cinza")">
+                @a.Status.Descricao
+            </span>
+        </div>
+        <p class="page-desc">Matrícula nº @a.Matricula · @a.Idade anos · @a.Sexo.Descricao</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Aluno" asp-action="Editar" asp-route-id="@a.Matricula" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Editar cadastro
+        </a>
+        <a asp-controller="Aluno" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="info-grid">
+    <div class="info-item">
+        <div class="info-rotulo">Nascimento</div>
+        <div class="info-valor">@a.DataNascimento.ToString("dd/MM/yyyy")</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Bairro / Cidade</div>
+        <div class="info-valor">@(string.IsNullOrEmpty(local) ? "—" : local)</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Responsável</div>
+        <div class="info-valor">@responsavel</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">Telefone do responsável</div>
+        <div class="info-valor">@(string.IsNullOrWhiteSpace(a.ResponsavelTelefone) ? "—" : a.ResponsavelTelefone)</div>
+    </div>
+    <div class="info-item">
+        <div class="info-rotulo">@(Model.Turmas.Count == 1 ? "Turma atual" : "Turmas")</div>
+        <div class="info-valor">
+            @if (Model.Turmas.Any())
+            {
+                @string.Join(", ", Model.Turmas.Select(t => t.Nome))
+            }
+            else
+            {
+                <text>Sem turma</text>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+
+        <!-- Presenças -->
+        <div class="panel mb-4">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Presenças</h2>
+
+                @if (Model.Presencas.Any())
+                {
+                    <div class="d-flex gap-4 mb-3 flex-wrap">
+                        <div>
+                            <div class="info-rotulo">Presença geral</div>
+                            <div class="stat-valor verde" style="font-size:1.4rem;">@Model.PercentualPresenca%</div>
+                        </div>
+                        <div>
+                            <div class="info-rotulo">Encontros</div>
+                            <div class="stat-valor" style="font-size:1.4rem;">@Model.Presencas.Count</div>
+                        </div>
+                        <div>
+                            <div class="info-rotulo">Última presença</div>
+                            <div class="stat-valor" style="font-size:1.4rem;">
+                                @(Model.UltimaPresenca?.ToString("dd/MM") ?? "—")
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-rotulo mb-1">Últimos encontros (mais recente primeiro)</div>
+                    <div class="presenca-bolinhas mb-3">
+                        @foreach (var p in Model.Presencas.Take(12))
+                        {
+                            <span class="@(p.Presente ? "presente" : "ausente")"
+                                  title="@p.Data.ToString("dd/MM/yyyy") · @p.TurmaNome · @(p.Presente ? "Presente" : "Faltou")">
+                                <i class="bi @(p.Presente ? "bi-check" : "bi-x")"></i>
+                            </span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size:.9rem;">
+                        Nenhuma presença registrada ainda.
+                        <a asp-controller="Encontro" asp-action="Registrar">Registrar frequência</a>.
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="panel">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Histórico no projeto</h2>
+                @if (Model.Historico.Any())
+                {
+                    <ul class="timeline">
+                        @foreach (var h in Model.Historico)
+                        {
+                            <li>
+                                <span class="timeline-data">@h.Data.ToString("dd/MM/yyyy")</span>
+                                @h.Texto
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size:.9rem;">Nenhum registro no histórico.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+
+        <!-- Observações -->
+        <div class="panel mb-4">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Observações</h2>
+
+                <form asp-controller="Aluno" asp-action="AdicionarObservacao" method="post" class="d-flex gap-2 mb-2">
+                    <input type="hidden" name="matricula" value="@a.Matricula" />
+                    <input type="text" name="texto" class="form-control form-control-sm"
+                           placeholder="Ex: muito tímido, possui alergia..." maxlength="200" required />
+                    <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </form>
+
+                @if (Model.Observacoes.Any())
+                {
+                    @foreach (var obs in Model.Observacoes)
+                    {
+                        <div class="obs-item">
+                            <div>
+                                @obs.Texto
+                                <span class="obs-data">@obs.Data.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <button type="button" class="btn-icone perigo btn-excluir-obs" title="Excluir observação"
+                                    data-url="@Url.Action("ExcluirObservacao", "Aluno", new { codigo = obs.Codigo, matricula = a.Matricula })">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size:.9rem;">
+                        Nenhuma observação. Anote aqui o que qualquer voluntário deveria saber.
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="panel mb-4">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Status no projeto</h2>
+                <form asp-controller="Aluno" asp-action="AlterarStatus" method="post" class="d-flex gap-2">
+                    <input type="hidden" name="matricula" value="@a.Matricula" />
+                    <select name="status" class="form-select form-select-sm">
+                        @foreach (var s in EnumeradorStatusAluno.Todos)
+                        {
+                            <option value="@s.Codigo" selected="@(a.Status.Codigo == s.Codigo)">@s.Descricao</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-secondary flex-shrink-0">Aplicar</button>
+                </form>
+                <div class="form-dica mt-2">
+                    Mudanças de status ficam registradas no histórico — não é preciso excluir o cadastro.
+                </div>
+            </div>
+        </div>
+
+        <!-- Zona de perigo -->
+        <div class="panel">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Excluir cadastro</h2>
+                <p class="text-muted" style="font-size:.85rem;">
+                    Apaga o aluno e todo o histórico definitivamente. Na dúvida, use o status acima.
+                </p>
+                <button type="button" class="btn btn-sm btn-excluir" id="btnExcluirAluno"
+                        data-url="@Url.Action("Excluir", "Aluno", new { id = a.Matricula })"
+                        data-nome="@a.Nome">
+                    <i class="bi bi-trash me-1"></i> Excluir definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".btn-excluir-obs").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url, "Excluir esta observação?")));
+
+        document.getElementById("btnExcluirAluno")?.addEventListener("click", function () {
+            confirmarPost(this.dataset.url,
+                `Excluir DEFINITIVAMENTE o cadastro de "${this.dataset.nome}"?\n` +
+                "Todo o histórico, presenças e observações serão apagados.");
+        });
+    </script>
+}

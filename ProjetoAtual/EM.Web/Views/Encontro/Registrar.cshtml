@@ -1,0 +1,148 @@
+@model EM.Web.Models.EncontroModel
+@{
+    bool ehEdicao = Model != null && Model.Codigo > 0;
+    ViewData["Title"] = ehEdicao ? "Editar frequência" : "Registrar frequência";
+    bool temTurma = Model != null && Model.TurmaCodigo > 0;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-desc">
+            @(ehEdicao
+                ? $"Encontro da turma {Model!.TurmaNome} em {Model.Data:dd/MM/yyyy}."
+                : "Escolha a turma, confira a data e desmarque quem faltou.")
+        </p>
+    </div>
+</div>
+
+<div class="panel form-painel">
+    <div class="panel-body">
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+             style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+        @if (!ehEdicao)
+        {
+            @* Passo 1: escolher a turma (GET recarrega com a lista de alunos) *@
+            <form method="get" asp-controller="Encontro" asp-action="Registrar" class="mb-3">
+                <label class="form-label">Turma</label>
+                <div class="d-flex gap-2">
+                    <select name="turma" class="form-select" onchange="this.form.submit()">
+                        <option value="">Selecione a turma</option>
+                        @foreach (var item in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Turmas)
+                        {
+                            <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                @if (!temTurma)
+                {
+                    <div class="form-dica">
+                        Não encontrou a turma?
+                        <a asp-controller="Turma" asp-action="Edite">Crie uma aqui</a>.
+                    </div>
+                }
+            </form>
+        }
+
+        @if (temTurma)
+        {
+            <form asp-controller="Encontro" asp-action="@(ehEdicao ? "Atualize" : "Gravar")" method="post">
+
+                <input type="hidden" name="codigo" value="@Model!.Codigo" />
+                <input type="hidden" name="turmaCodigo" value="@Model.TurmaCodigo" />
+
+                @if (ehEdicao)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Turma</label>
+                        <input class="form-control" value="@Model.TurmaNome" disabled />
+                    </div>
+                }
+
+                <div class="mb-3 col-md-5">
+                    <label class="form-label">Data do encontro</label>
+                    <input type="date" name="data" class="form-control"
+                           value="@Model.Data.ToString("yyyy-MM-dd")" required />
+                </div>
+
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label mb-0">
+                        Lista de presença
+                        <span class="badge-suave badge-azul ms-1">@Model.Presencas.Count aluno(s)</span>
+                    </label>
+                    <span class="form-dica">
+                        <a href="#" id="marcarTodos">Marcar todos</a> ·
+                        <a href="#" id="desmarcarTodos">Desmarcar todos</a>
+                    </span>
+                </div>
+
+                @if (Model.Presencas.Any())
+                {
+                    <div class="lista-presenca mb-3">
+                        @foreach (var p in Model.Presencas)
+                        {
+                            <label class="linha-presenca">
+                                <input type="hidden" name="matriculas" value="@p.Matricula" />
+                                <span class="form-check form-switch m-0 p-0">
+                                    <input type="checkbox" role="switch"
+                                           class="form-check-input form-switch-presenca float-none ms-0"
+                                           name="presentes" value="@p.Matricula" checked="@p.Presente" />
+                                </span>
+                                <span class="nome-aluno">@p.Nome</span>
+                                <span class="matricula">nº @p.Matricula</span>
+                            </label>
+                        }
+                    </div>
+
+                    <div class="form-dica mb-3" id="resumoPresenca"></div>
+
+                    <div class="form-acoes">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Salvar frequência
+                        </button>
+                        <a asp-controller="Encontro" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="estado-vazio py-4">
+                        <p>Esta turma ainda não tem alunos.</p>
+                        <a asp-controller="Turma" asp-action="Alunos" asp-route-id="@Model.TurmaCodigo"
+                           class="btn btn-primary">Adicionar alunos à turma</a>
+                    </div>
+                }
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const caixas = () => document.querySelectorAll(".form-switch-presenca");
+        const resumo = document.getElementById("resumoPresenca");
+
+        function atualizarResumo() {
+            if (!resumo) return;
+            const total = caixas().length;
+            const presentes = [...caixas()].filter(c => c.checked).length;
+            resumo.textContent = `${presentes} presente(s), ${total - presentes} falta(s).`;
+        }
+
+        caixas().forEach(c => c.addEventListener("change", atualizarResumo));
+        atualizarResumo();
+
+        document.getElementById("marcarTodos")?.addEventListener("click", e => {
+            e.preventDefault();
+            caixas().forEach(c => c.checked = true);
+            atualizarResumo();
+        });
+
+        document.getElementById("desmarcarTodos")?.addEventListener("click", e => {
+            e.preventDefault();
+            caixas().forEach(c => c.checked = false);
+            atualizarResumo();
+        });
+    </script>
+}

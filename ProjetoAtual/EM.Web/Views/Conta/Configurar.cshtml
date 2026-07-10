@@ -1,0 +1,60 @@
+@model EM.Web.Models.PrimeiroUsuarioModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuração inicial - FazerBemFazBemTambém</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="tela-login">
+        <div class="cartao-login">
+            <div class="text-center mb-4">
+                <h1 class="page-title">Bem-vindo!</h1>
+                <p class="page-desc">
+                    Este é o primeiro acesso. Crie o usuário administrador para proteger o sistema.
+                </p>
+            </div>
+
+            <form asp-controller="Conta" asp-action="Configurar" method="post">
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+                     style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Nome" class="form-label">Seu nome</label>
+                    <input asp-for="Nome" class="form-control" autofocus maxlength="100"
+                           placeholder="Como aparecerá no sistema" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Login" class="form-label">Usuário (login)</label>
+                    <input asp-for="Login" class="form-control" maxlength="50"
+                           placeholder="letras e números, sem espaços" autocomplete="username" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Senha" class="form-label">Senha</label>
+                    <input asp-for="Senha" type="password" class="form-control" autocomplete="new-password" />
+                    <div class="form-dica">Mínimo de 8 caracteres.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmacaoSenha" class="form-label">Confirme a senha</label>
+                    <input asp-for="ConfirmacaoSenha" type="password" class="form-control" autocomplete="new-password" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-shield-check me-1"></i> Criar usuário e entrar
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,115 @@
+@model IEnumerable<EM.Web.Models.VoluntarioModel>
+@{
+    ViewData["Title"] = "Voluntários";
+    var funcoes = Model?.Select(v => v.Funcao).Where(f => !string.IsNullOrWhiteSpace(f))
+        .Distinct().OrderBy(f => f).ToList() ?? new List<string?>();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Voluntários</h1>
+        <p class="page-desc">Quem ajuda o projeto a acontecer.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Voluntario" asp-action="Edite" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Novo voluntário
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="text" id="filtroBusca" class="form-control filtro-busca"
+           placeholder="Pesquisar voluntário..." />
+    <select id="filtroFuncao" class="form-select" aria-label="Filtrar por função">
+        <option value="">Todas as funções</option>
+        @foreach (var f in funcoes)
+        {
+            <option value="@f">@f</option>
+        }
+    </select>
+</div>
+
+<div class="panel">
+    <table class="table-clean" id="tabelaVoluntarios">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Função</th>
+                <th class="col-acoes">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var v in Model)
+                {
+                    <tr data-busca="@v.Nome.ToLowerInvariant()" data-funcao="@v.Funcao">
+                        <td>@v.Nome</td>
+                        <td>@(string.IsNullOrWhiteSpace(v.Telefone) ? "—" : v.Telefone)</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(v.Funcao))
+                            {
+                                <span class="badge-suave badge-azul">@v.Funcao</span>
+                            }
+                            else
+                            {
+                                <text>—</text>
+                            }
+                        </td>
+                        <td class="col-acoes">
+                            <a asp-controller="Voluntario" asp-action="Editar" asp-route-id="@v.Codigo"
+                               class="btn-icone" title="Editar voluntário">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn-icone perigo btn-excluir-voluntario"
+                                    title="Excluir voluntário"
+                                    data-url="@Url.Action("Excluir", "Voluntario", new { id = v.Codigo })"
+                                    data-nome="@v.Nome">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">
+                        <div class="estado-vazio">
+                            <i class="bi bi-heart"></i>
+                            <p>Nenhum voluntário cadastrado ainda.</p>
+                            <a asp-controller="Voluntario" asp-action="Edite" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i> Cadastrar o primeiro voluntário
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const busca = document.getElementById("filtroBusca");
+        const filtroFuncao = document.getElementById("filtroFuncao");
+
+        function aplicarFiltros() {
+            const termo = busca.value.trim().toLowerCase();
+            const funcao = filtroFuncao.value;
+            document.querySelectorAll("#tabelaVoluntarios tbody tr[data-busca]").forEach(tr => {
+                const mostra = (!termo || tr.dataset.busca.includes(termo))
+                    && (!funcao || tr.dataset.funcao === funcao);
+                tr.style.display = mostra ? "" : "none";
+            });
+        }
+
+        busca?.addEventListener("input", aplicarFiltros);
+        filtroFuncao?.addEventListener("change", aplicarFiltros);
+
+        document.querySelectorAll(".btn-excluir-voluntario").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url, `Excluir o voluntário "${btn.dataset.nome}"?`)));
+    </script>
+}

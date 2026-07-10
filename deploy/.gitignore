@@ -1,0 +1,7 @@
+# Segredos e dados da VM nunca vão para o git
+.env
+dados/
+backups/
+backup.log
+*.fbk
+*.gpg

@@ -1,0 +1,97 @@
+@model EM.Web.Models.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var hora = DateTime.Now.Hour;
+    var saudacao = hora < 12 ? "Bom dia!" : hora < 18 ? "Boa tarde!" : "Boa noite!";
+    var hojeExtenso = DateTime.Today.ToString("dddd, dd 'de' MMMM 'de' yyyy",
+        new System.Globalization.CultureInfo("pt-BR"));
+    var dataFormatada = string.Concat(hojeExtenso[0].ToString().ToUpper(), hojeExtenso[1..]);
+}
+
+<div class="saudacao">
+    <h1>@saudacao</h1>
+    <p>Hoje é @dataFormatada.</p>
+</div>
+
+<!-- Hoje -->
+<div class="panel mb-4">
+    <div class="panel-body">
+        <h2 class="panel-titulo">Hoje</h2>
+        @if (Model.EncontrosHoje.Any())
+        {
+            @foreach (var e in Model.EncontrosHoje)
+            {
+                <div class="obs-item">
+                    <div>
+                        <strong>@e.TurmaNome</strong> ·
+                        @e.TotalPresentes de @e.TotalAlunos presentes
+                    </div>
+                    <span class="badge-suave @(e.Percentual >= 70 ? "badge-verde" : "badge-cinza")">
+                        @e.Percentual%
+                    </span>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <p class="text-muted mb-0" style="font-size:.92rem;">
+                    <i class="bi bi-info-circle me-1"></i> Nenhuma frequência registrada hoje.
+                </p>
+                <a asp-controller="Encontro" asp-action="Registrar" class="btn btn-sm btn-primary">
+                    <i class="bi bi-check2-square me-1"></i> Registrar agora
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Números do projeto -->
+<div class="stats-grid">
+
+    <a class="stat-card" asp-controller="Aluno" asp-action="Index">
+        <div class="stat-rotulo"><i class="bi bi-mortarboard"></i> Alunos</div>
+        <div class="stat-valor">@Model.TotalAlunosAtivos</div>
+        <div class="stat-detalhe">ativos no projeto</div>
+    </a>
+
+    <a class="stat-card" asp-controller="Turma" asp-action="Index">
+        <div class="stat-rotulo"><i class="bi bi-people"></i> Turmas</div>
+        <div class="stat-valor">@Model.TotalTurmas</div>
+        <div class="stat-detalhe">grupos ativos</div>
+    </a>
+
+    <a class="stat-card" asp-controller="Encontro" asp-action="Index">
+        <div class="stat-rotulo"><i class="bi bi-check2-square"></i> Encontros realizados</div>
+        <div class="stat-valor">@Model.EncontrosRealizados</div>
+        <div class="stat-detalhe">frequências registradas</div>
+    </a>
+
+    <a class="stat-card" asp-controller="Relatorio" asp-action="Index">
+        <div class="stat-rotulo"><i class="bi bi-graph-up"></i> Presença média</div>
+        @if (Model.PresencaMedia is int media)
+        {
+            <div class="stat-valor verde">@media%</div>
+            <div class="stat-detalhe">em todos os encontros</div>
+        }
+        else
+        {
+            <div class="stat-valor">&mdash;</div>
+            <div class="stat-detalhe">sem encontros ainda</div>
+        }
+    </a>
+</div>
+
+<h2 class="panel-titulo">Ações rápidas</h2>
+<div class="acoes-rapidas">
+    <a class="btn btn-primary" asp-controller="Encontro" asp-action="Registrar">
+        <i class="bi bi-check2-square me-1"></i> Registrar frequência
+    </a>
+    <a class="btn btn-outline-secondary" asp-controller="Aluno" asp-action="Edite">
+        <i class="bi bi-plus-lg me-1"></i> Novo aluno
+    </a>
+    <a class="btn btn-outline-secondary" asp-controller="Turma" asp-action="Edite">
+        <i class="bi bi-plus-lg me-1"></i> Nova turma
+    </a>
+</div>

@@ -1,0 +1,997 @@
+/* ============================================================
+   FazerBemFazBemTambém — Design System
+   Paleta: branco, cinza claro, azul (ação), verde (status),
+   vermelho (exclusão). Nada além disso.
+   ============================================================ */
+
+:root {
+    /* Neutros */
+    --em-branco: #ffffff;
+    --em-fundo: #f7f8fa;
+    --em-cinza-100: #f1f3f5;
+    --em-borda: #e5e7eb;
+    --em-texto: #1f2937;
+    --em-texto-suave: #6b7280;
+    --em-texto-fraco: #9ca3af;
+
+    /* Azul — ações principais */
+    --em-azul: #2563eb;
+    --em-azul-escuro: #1d4ed8;
+    --em-azul-claro: #eff6ff;
+
+    /* Verde — status positivo */
+    --em-verde: #16a34a;
+    --em-verde-claro: #f0fdf4;
+
+    /* Vermelho — exclusão */
+    --em-vermelho: #dc2626;
+    --em-vermelho-escuro: #b91c1c;
+    --em-vermelho-claro: #fef2f2;
+
+    --em-sidebar-largura: 248px;
+    --em-raio: 10px;
+    --em-sombra: 0 1px 2px rgba(16, 24, 40, .05);
+}
+
+html {
+    font-size: 15px;
+}
+
+body {
+    margin: 0;
+    background-color: var(--em-fundo);
+    color: var(--em-texto);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--em-azul);
+    text-decoration: none;
+}
+
+    a:hover {
+        color: var(--em-azul-escuro);
+    }
+
+/* ============================================================
+   Estrutura: sidebar + área principal
+   ============================================================ */
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-conteudo {
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem 3rem;
+    flex: 1;
+}
+
+@media (max-width: 991.98px) {
+    .app-conteudo {
+        padding: 1.25rem 1rem 2rem;
+    }
+}
+
+.app-rodape {
+    padding: 1rem 2.5rem;
+    font-size: .8rem;
+    color: var(--em-texto-fraco);
+    text-align: center;
+}
+
+/* ── Sidebar ── */
+
+.sidebar {
+    width: var(--em-sidebar-largura);
+    flex-shrink: 0;
+    background: var(--em-branco);
+    border-right: 1px solid var(--em-borda);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* No desktop a sidebar é fixa na lateral; no mobile o Bootstrap
+   assume o posicionamento (offcanvas). */
+@media (min-width: 992px) {
+    .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+    }
+}
+
+.sidebar-marca {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--em-borda);
+    font-weight: 600;
+    font-size: .95rem;
+    color: var(--em-texto);
+}
+
+    .sidebar-marca img {
+        height: 28px;
+        width: auto;
+    }
+
+    .sidebar-marca:hover {
+        color: var(--em-texto);
+    }
+
+.sidebar-nav {
+    padding: .9rem .75rem;
+    flex: 1;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem .75rem;
+    margin-bottom: .15rem;
+    border-radius: 8px;
+    color: var(--em-texto-suave);
+    font-size: .92rem;
+    font-weight: 500;
+}
+
+    .sidebar-item i {
+        font-size: 1.05rem;
+        width: 1.25rem;
+        text-align: center;
+    }
+
+    .sidebar-item:hover {
+        background: var(--em-cinza-100);
+        color: var(--em-texto);
+    }
+
+    .sidebar-item.active {
+        background: var(--em-azul-claro);
+        color: var(--em-azul);
+    }
+
+    .sidebar-item.desabilitado {
+        color: var(--em-texto-fraco);
+        cursor: default;
+        pointer-events: none;
+    }
+
+.sidebar-subitem {
+    display: block;
+    padding: .35rem .75rem .35rem 3rem;
+    margin-bottom: .1rem;
+    border-radius: 8px;
+    color: var(--em-texto-suave);
+    font-size: .87rem;
+}
+
+    .sidebar-subitem:hover {
+        background: var(--em-cinza-100);
+        color: var(--em-texto);
+    }
+
+    .sidebar-subitem.active {
+        color: var(--em-azul);
+        font-weight: 600;
+        background: transparent;
+    }
+
+.sidebar-grupo {
+    margin: 1.1rem .75rem .35rem;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--em-texto-fraco);
+}
+
+.sidebar-rodape {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--em-borda);
+    font-size: .75rem;
+    color: var(--em-texto-fraco);
+}
+
+/* Topbar (apenas mobile) */
+.topbar {
+    display: none;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem 1rem;
+    background: var(--em-branco);
+    border-bottom: 1px solid var(--em-borda);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+    .topbar img {
+        height: 24px;
+    }
+
+    .topbar .topbar-titulo {
+        font-weight: 600;
+        font-size: .95rem;
+    }
+
+@media (max-width: 991.98px) {
+    .topbar {
+        display: flex;
+    }
+}
+
+/* ============================================================
+   Padrão de página: cabeçalho, filtros, painel
+   ============================================================ */
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.45rem;
+    font-weight: 650;
+    margin: 0;
+    letter-spacing: -.01em;
+}
+
+.page-desc {
+    margin: .25rem 0 0;
+    color: var(--em-texto-suave);
+    font-size: .92rem;
+}
+
+.page-actions {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+.filter-bar {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    padding: .75rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--em-sombra);
+}
+
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+        font-size: .9rem;
+    }
+
+    .filter-bar .filtro-busca {
+        flex: 1 1 220px;
+        max-width: 340px;
+    }
+
+    .filter-bar .form-select {
+        width: auto;
+        min-width: 130px;
+    }
+
+.panel {
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    box-shadow: var(--em-sombra);
+    overflow: hidden;
+}
+
+.panel-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.panel-titulo {
+    font-size: .95rem;
+    font-weight: 600;
+    margin: 0 0 .75rem;
+}
+
+/* ============================================================
+   Tabelas
+   ============================================================ */
+
+.table-clean {
+    width: 100%;
+    margin: 0;
+    font-size: .92rem;
+    border-collapse: collapse;
+}
+
+    .table-clean thead th {
+        background: var(--em-fundo);
+        color: var(--em-texto-suave);
+        font-size: .74rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        padding: .6rem 1rem;
+        border-bottom: 1px solid var(--em-borda);
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .table-clean tbody td {
+        padding: .7rem 1rem;
+        border-bottom: 1px solid var(--em-cinza-100);
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    .table-clean tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-clean tbody tr:hover {
+        background: var(--em-fundo);
+    }
+
+    .table-clean .col-acoes {
+        text-align: right;
+        white-space: nowrap;
+        width: 1%;
+    }
+
+/* ============================================================
+   Botões
+   ============================================================ */
+
+.btn {
+    font-size: .9rem;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+.btn-primary {
+    background-color: var(--em-azul);
+    border-color: var(--em-azul);
+}
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background-color: var(--em-azul-escuro);
+        border-color: var(--em-azul-escuro);
+    }
+
+.btn-outline-secondary {
+    color: var(--em-texto-suave);
+    border-color: var(--em-borda);
+    background: var(--em-branco);
+}
+
+    .btn-outline-secondary:hover {
+        background: var(--em-cinza-100);
+        color: var(--em-texto);
+        border-color: var(--em-borda);
+    }
+
+.btn-excluir {
+    color: var(--em-vermelho);
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+    .btn-excluir:hover {
+        background: var(--em-vermelho-claro);
+        color: var(--em-vermelho-escuro);
+    }
+
+/* Botão apenas-ícone usado em linhas de tabela e cards */
+.btn-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--em-texto-suave);
+    font-size: .95rem;
+}
+
+    .btn-icone:hover {
+        background: var(--em-cinza-100);
+        color: var(--em-texto);
+    }
+
+    .btn-icone.perigo:hover {
+        background: var(--em-vermelho-claro);
+        color: var(--em-vermelho);
+    }
+
+.btn:focus,
+.btn:active:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
+    border-color: var(--em-azul);
+}
+
+.form-check-input:checked {
+    background-color: var(--em-azul);
+    border-color: var(--em-azul);
+}
+
+/* ============================================================
+   Badges de status
+   ============================================================ */
+
+.badge-suave {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+}
+
+.badge-verde {
+    background: var(--em-verde-claro);
+    color: var(--em-verde);
+}
+
+.badge-cinza {
+    background: var(--em-cinza-100);
+    color: var(--em-texto-suave);
+}
+
+.badge-azul {
+    background: var(--em-azul-claro);
+    color: var(--em-azul);
+}
+
+/* ============================================================
+   Dashboard
+   ============================================================ */
+
+.saudacao {
+    margin-bottom: 1.75rem;
+}
+
+    .saudacao h1 {
+        font-size: 1.6rem;
+        font-weight: 650;
+        margin: 0;
+        letter-spacing: -.01em;
+    }
+
+    .saudacao p {
+        margin: .3rem 0 0;
+        color: var(--em-texto-suave);
+        font-size: .92rem;
+    }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    box-shadow: var(--em-sombra);
+    padding: 1.1rem 1.25rem;
+    display: block;
+    color: inherit;
+}
+
+    .stat-card:hover {
+        border-color: #d3d8df;
+        color: inherit;
+    }
+
+.stat-rotulo {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--em-texto-suave);
+}
+
+    .stat-rotulo i {
+        font-size: 1rem;
+    }
+
+.stat-valor {
+    font-size: 1.9rem;
+    font-weight: 650;
+    margin-top: .35rem;
+    letter-spacing: -.02em;
+}
+
+    .stat-valor.verde {
+        color: var(--em-verde);
+    }
+
+.stat-detalhe {
+    font-size: .8rem;
+    color: var(--em-texto-fraco);
+    margin-top: .1rem;
+}
+
+.acoes-rapidas {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+/* ============================================================
+   Cards de turma
+   ============================================================ */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1rem;
+}
+
+.card-turma {
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    box-shadow: var(--em-sombra);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+    .card-turma:hover {
+        border-color: #d3d8df;
+    }
+
+.card-turma-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .5rem;
+}
+
+.card-turma-nome {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-turma-meta {
+    color: var(--em-texto-suave);
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+    .card-turma-meta i {
+        font-size: .9rem;
+    }
+
+.card-turma-acoes {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .8rem;
+}
+
+/* ============================================================
+   Página da turma (detalhes)
+   ============================================================ */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    padding: .85rem 1rem;
+}
+
+.info-rotulo {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--em-texto-fraco);
+}
+
+.info-valor {
+    font-size: .98rem;
+    font-weight: 600;
+    margin-top: .2rem;
+}
+
+/* ============================================================
+   Formulários
+   ============================================================ */
+
+.form-painel {
+    max-width: 680px;
+}
+
+.form-label {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--em-texto);
+    margin-bottom: .3rem;
+}
+
+.form-control,
+.form-select {
+    border-color: var(--em-borda);
+    border-radius: 8px;
+    font-size: .92rem;
+}
+
+.form-dica {
+    font-size: .78rem;
+    color: var(--em-texto-fraco);
+    margin-top: .2rem;
+}
+
+.form-acoes {
+    display: flex;
+    gap: .6rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--em-cinza-100);
+}
+
+.dias-semana {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+    .dias-semana input[type="checkbox"] {
+        display: none;
+    }
+
+    .dias-semana label {
+        border: 1px solid var(--em-borda);
+        border-radius: 999px;
+        padding: .3rem .8rem;
+        font-size: .85rem;
+        color: var(--em-texto-suave);
+        cursor: pointer;
+        user-select: none;
+        background: var(--em-branco);
+    }
+
+    .dias-semana input[type="checkbox"]:checked + label {
+        background: var(--em-azul-claro);
+        border-color: var(--em-azul);
+        color: var(--em-azul);
+        font-weight: 600;
+    }
+
+/* ============================================================
+   Estados vazios e alertas
+   ============================================================ */
+
+.estado-vazio {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--em-texto-suave);
+}
+
+    .estado-vazio i {
+        font-size: 2rem;
+        color: var(--em-texto-fraco);
+        display: block;
+        margin-bottom: .6rem;
+    }
+
+    .estado-vazio p {
+        margin: 0 0 1rem;
+    }
+
+.alert {
+    border-radius: var(--em-raio);
+    font-size: .9rem;
+}
+
+.alert-success {
+    background: var(--em-verde-claro);
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.alert-danger {
+    background: var(--em-vermelho-claro);
+    border-color: #fecaca;
+    color: var(--em-vermelho-escuro);
+}
+
+/* ============================================================
+   Busca global (topo de todas as páginas)
+   ============================================================ */
+
+.busca-global {
+    position: relative;
+    max-width: 420px;
+    margin-bottom: 1.25rem;
+}
+
+    .busca-global .form-control {
+        padding-left: 2.3rem;
+        background: var(--em-branco);
+    }
+
+    .busca-global > i {
+        position: absolute;
+        left: .8rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--em-texto-fraco);
+        pointer-events: none;
+    }
+
+.busca-resultados {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    box-shadow: 0 8px 24px rgba(16, 24, 40, .12);
+    z-index: 1050;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+    .busca-resultados a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        padding: .55rem .9rem;
+        color: var(--em-texto);
+        font-size: .9rem;
+        border-bottom: 1px solid var(--em-cinza-100);
+    }
+
+        .busca-resultados a:last-child {
+            border-bottom: none;
+        }
+
+        .busca-resultados a:hover {
+            background: var(--em-fundo);
+        }
+
+    .busca-resultados .sem-resultado {
+        padding: .75rem .9rem;
+        color: var(--em-texto-suave);
+        font-size: .88rem;
+    }
+
+/* ============================================================
+   Lista de presença (encontros)
+   ============================================================ */
+
+.lista-presenca {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+}
+
+.linha-presenca {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .55rem .9rem;
+    border-bottom: 1px solid var(--em-cinza-100);
+    cursor: pointer;
+    user-select: none;
+}
+
+    .linha-presenca:last-child {
+        border-bottom: none;
+    }
+
+    .linha-presenca:hover {
+        background: var(--em-fundo);
+    }
+
+    .linha-presenca .form-check-input {
+        width: 2.4em;
+        height: 1.25em;
+        margin: 0;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .linha-presenca .form-check-input:checked {
+        background-color: var(--em-verde);
+        border-color: var(--em-verde);
+    }
+
+    .linha-presenca .nome-aluno {
+        flex: 1;
+    }
+
+    .linha-presenca .matricula {
+        color: var(--em-texto-fraco);
+        font-size: .8rem;
+    }
+
+/* ============================================================
+   Perfil do aluno
+   ============================================================ */
+
+.perfil-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+}
+
+.timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+    .timeline::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        background: var(--em-cinza-100);
+    }
+
+    .timeline li {
+        position: relative;
+        padding: 0 0 1rem 1.6rem;
+        font-size: .9rem;
+    }
+
+        .timeline li:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--em-azul-claro);
+            border: 3px solid var(--em-azul);
+        }
+
+    .timeline .timeline-data {
+        color: var(--em-texto-fraco);
+        font-size: .78rem;
+        display: block;
+    }
+
+.obs-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--em-cinza-100);
+    font-size: .9rem;
+}
+
+    .obs-item:last-child {
+        border-bottom: none;
+    }
+
+    .obs-item .obs-data {
+        color: var(--em-texto-fraco);
+        font-size: .78rem;
+        display: block;
+    }
+
+.presenca-bolinhas {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+}
+
+    .presenca-bolinhas span {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .75rem;
+    }
+
+    .presenca-bolinhas .presente {
+        background: var(--em-verde-claro);
+        color: var(--em-verde);
+    }
+
+    .presenca-bolinhas .ausente {
+        background: var(--em-cinza-100);
+        color: var(--em-texto-fraco);
+    }
+
+/* ============================================================
+   Tela de login / configuração inicial
+   ============================================================ */
+
+.tela-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--em-fundo);
+    padding: 1.5rem;
+}
+
+.cartao-login {
+    width: 100%;
+    max-width: 400px;
+    background: var(--em-branco);
+    border: 1px solid var(--em-borda);
+    border-radius: var(--em-raio);
+    box-shadow: 0 4px 16px rgba(16, 24, 40, .08);
+    padding: 2rem;
+}
+
+/* Usuário logado no rodapé da sidebar */
+.sidebar-usuario {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+    font-size: .85rem;
+    color: var(--em-texto-suave);
+}
+
+    .sidebar-usuario .nome {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }

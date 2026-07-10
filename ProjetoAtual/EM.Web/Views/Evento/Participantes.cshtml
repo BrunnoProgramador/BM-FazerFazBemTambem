@@ -1,0 +1,141 @@
+@model EM.Web.Models.EventoModel
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.Nome</h1>
+        <p class="page-desc">
+            @Model.Data.ToString("dd/MM/yyyy")
+            @(string.IsNullOrWhiteSpace(Model.Observacao) ? "" : $" · {Model.Observacao}")
+        </p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Evento" asp-action="Editar" asp-route-id="@Model.Codigo"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i> Editar
+        </a>
+        <a asp-controller="Evento" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Participantes -->
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="panel-body pb-0">
+                <h2 class="panel-titulo">
+                    Participantes
+                    <span class="badge-suave badge-azul ms-1">@Model.Participantes.Count</span>
+                </h2>
+            </div>
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nome</th>
+                        <th class="col-acoes"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Participantes.Any())
+                    {
+                        @foreach (var a in Model.Participantes)
+                        {
+                            <tr>
+                                <td>@a.Matricula</td>
+                                <td>@a.Nome</td>
+                                <td class="col-acoes">
+                                    <button type="button" class="btn-icone perigo btn-remover-participante"
+                                            title="Remover do evento"
+                                            data-url="@Url.Action("RemoverParticipante", "Evento", new { eventoCodigo = Model.Codigo, matricula = a.Matricula })"
+                                            data-nome="@a.Nome">
+                                        <i class="bi bi-person-dash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3">
+                                <div class="estado-vazio py-4">
+                                    <p class="mb-0">Ninguém marcado ainda. Adicione ao lado.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Adicionar participante -->
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-body pb-0">
+                <h2 class="panel-titulo">
+                    Adicionar aluno
+                    <span class="badge-suave badge-cinza ms-1">@Model.Disponiveis.Count disponível(is)</span>
+                </h2>
+                <input type="text" id="buscaDisponiveis" class="form-control form-control-sm mb-2"
+                       placeholder="Pesquisar aluno..." />
+            </div>
+            <table class="table-clean" id="tabelaDisponiveis">
+                <tbody>
+                    @if (Model.Disponiveis.Any())
+                    {
+                        @foreach (var a in Model.Disponiveis)
+                        {
+                            <tr data-busca="@a.Nome.ToLowerInvariant()">
+                                <td>@a.Matricula</td>
+                                <td>@a.Nome</td>
+                                <td class="col-acoes">
+                                    <button type="button" class="btn-icone btn-adicionar-participante"
+                                            title="Adicionar ao evento"
+                                            data-url="@Url.Action("AdicionarParticipante", "Evento", new { eventoCodigo = Model.Codigo, matricula = a.Matricula })">
+                                        <i class="bi bi-person-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                <div class="estado-vazio py-4">
+                                    <p class="mb-0">Todos os alunos ativos já participam.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".btn-remover-participante").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url, `Remover "${btn.dataset.nome}" do evento?`)));
+
+        document.querySelectorAll(".btn-adicionar-participante").forEach(btn =>
+            btn.addEventListener("click", () => postar(btn.dataset.url)));
+
+        const buscaDisp = document.getElementById("buscaDisponiveis");
+        buscaDisp?.addEventListener("input", () => {
+            const termo = buscaDisp.value.trim().toLowerCase();
+            document.querySelectorAll("#tabelaDisponiveis tbody tr[data-busca]").forEach(tr => {
+                tr.style.display = !termo || tr.dataset.busca.includes(termo) ? "" : "none";
+            });
+        });
+    </script>
+}

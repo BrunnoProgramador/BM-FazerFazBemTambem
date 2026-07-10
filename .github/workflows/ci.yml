@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    # Firebird real para os testes de integração (EM_TESTE_FIREBIRD)
+    services:
+      firebird:
+        image: jacobalberty/firebird:v5
+        env:
+          ISC_PASSWORD: masterkey
+          FIREBIRD_DATABASE: teste.fdb
+        ports:
+          - 3050:3050
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ProjetoAtual/ProjetoAtual.slnx
+
+      - name: Build
+        run: dotnet build ProjetoAtual/ProjetoAtual.slnx --no-restore --configuration Release
+
+      - name: Test (unitários + integração)
+        env:
+          EM_TESTE_FIREBIRD: "DataSource=localhost;Port=3050;Database=/firebird/data/teste.fdb;User=SYSDBA;Password=masterkey;Charset=UTF8"
+        run: dotnet test ProjetoAtual/ProjetoAtual.slnx --no-build --configuration Release

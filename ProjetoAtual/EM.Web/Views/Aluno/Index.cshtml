@@ -1,0 +1,169 @@
+@using EM.Domain.Utilitarios
+@model IEnumerable<EM.Web.Models.AlunoModel>
+@{
+    ViewData["Title"] = "Alunos";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Alunos</h1>
+        <p class="page-desc">Consulte o cadastro das crianças atendidas pelo projeto.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Aluno" asp-action="Edite" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Novo aluno
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="text" id="termoBusca" class="form-control filtro-busca"
+           placeholder="Pesquisar aluno..." />
+    <select id="tipoBusca" class="form-select" aria-label="Tipo de busca">
+        <option value="nome" selected>Por nome</option>
+        <option value="matricula">Por matrícula</option>
+    </select>
+    <select id="filtroStatus" class="form-select" aria-label="Filtrar por status">
+        <option value="">Todos os status</option>
+        @foreach (var s in EnumeradorStatusAluno.Todos)
+        {
+            <option value="@s.Codigo">@s.Descricao</option>
+        }
+    </select>
+    <button class="btn btn-outline-secondary" type="button" id="btnBuscar">
+        <i class="bi bi-search me-1"></i> Pesquisar
+    </button>
+</div>
+
+<div class="panel">
+    <table class="table-clean">
+        <thead>
+            <tr>
+                <th>Matrícula</th>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Status</th>
+                <th>Bairro / Cidade</th>
+                <th class="col-acoes">Ações</th>
+            </tr>
+        </thead>
+        <tbody id="corpoTabela">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var aluno in Model)
+                {
+                    var local = string.Join(", ",
+                        new[] { aluno.Bairro, aluno.Cidade }.Where(p => !string.IsNullOrWhiteSpace(p)));
+                    <tr data-status="@aluno.Status.Codigo">
+                        <td>@aluno.Matricula</td>
+                        <td>
+                            <a asp-controller="Aluno" asp-action="Perfil" asp-route-id="@aluno.Matricula">
+                                @aluno.Nome
+                            </a>
+                        </td>
+                        <td>@aluno.Idade anos</td>
+                        <td>
+                            <span class="badge-suave @(aluno.Status.Codigo == 0 ? "badge-verde" : "badge-cinza")">
+                                @aluno.Status.Descricao
+                            </span>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(local) ? "—" : local)</td>
+                        <td class="col-acoes">
+                            <a asp-controller="Aluno" asp-action="Perfil" asp-route-id="@aluno.Matricula"
+                               class="btn-icone" title="Ver perfil">
+                                <i class="bi bi-person-vcard"></i>
+                            </a>
+                            <a asp-controller="Aluno" asp-action="Editar" asp-route-id="@aluno.Matricula"
+                               class="btn-icone" title="Editar cadastro">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6">
+                        <div class="estado-vazio">
+                            <i class="bi bi-mortarboard"></i>
+                            <p>Nenhum aluno cadastrado ainda.</p>
+                            <a asp-controller="Aluno" asp-action="Edite" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i> Cadastrar o primeiro aluno
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const urlPerfil = '@Url.Action("Perfil", "Aluno")';
+        const urlEditar = '@Url.Action("Editar", "Aluno")';
+        const filtroStatus = document.getElementById("filtroStatus");
+
+        document.getElementById("btnBuscar").addEventListener("click", buscarAluno);
+        document.getElementById("termoBusca").addEventListener("keydown", e => {
+            if (e.key === "Enter") buscarAluno();
+        });
+        filtroStatus.addEventListener("change", aplicarFiltroStatus);
+
+        function aplicarFiltroStatus() {
+            const status = filtroStatus.value;
+            document.querySelectorAll("#corpoTabela tr[data-status]").forEach(tr => {
+                tr.style.display = (!status || tr.dataset.status === status) ? "" : "none";
+            });
+        }
+
+        async function buscarAluno() {
+            const termo = document.getElementById("termoBusca").value.trim();
+            const tipo = document.getElementById("tipoBusca").value;
+
+            const url = (tipo === "matricula" && termo)
+                ? `@Url.Action("BuscarPorMatricula", "Aluno")?matricula=${encodeURIComponent(termo)}`
+                : `@Url.Action("BuscarPorNome", "Aluno")?nome=${encodeURIComponent(termo)}`;
+
+            try {
+                const resp = await fetch(url);
+                const alunos = await resp.json();
+                renderizarTabela(alunos);
+                aplicarFiltroStatus();
+            } catch (e) {
+                console.error("Erro na busca:", e);
+            }
+        }
+
+        function renderizarTabela(alunos) {
+            const tbody = document.getElementById("corpoTabela");
+
+            if (alunos.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6">
+                        <div class="estado-vazio"><i class="bi bi-search"></i>
+                        <p class="mb-0">Nenhum aluno encontrado.</p></div>
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = alunos.map(a => `
+                <tr data-status="${a.statusCodigo}">
+                    <td>${a.matricula}</td>
+                    <td><a href="${urlPerfil}/${a.matricula}">${escHtml(a.nome)}</a></td>
+                    <td>${a.idade} anos</td>
+                    <td><span class="badge-suave ${a.statusCodigo === 0 ? "badge-verde" : "badge-cinza"}">${escHtml(a.status)}</span></td>
+                    <td>${a.cidade ? escHtml(a.cidade) : "—"}</td>
+                    <td class="col-acoes">
+                        <a href="${urlPerfil}/${a.matricula}" class="btn-icone" title="Ver perfil">
+                            <i class="bi bi-person-vcard"></i>
+                        </a>
+                        <a href="${urlEditar}/${a.matricula}" class="btn-icone" title="Editar cadastro">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>`).join("");
+        }
+    </script>
+}

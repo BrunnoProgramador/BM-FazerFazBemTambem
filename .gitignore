@@ -1,0 +1,26 @@
+# Este repositório já tem .gitignore específicos em ProjetoAtual/ (template
+# padrão do Visual Studio: bin/, obj/, .vs/, etc.) e em deploy/ (segredos da
+# VM). Este arquivo cobre o que sobra na raiz do projeto.
+
+# Segredos e configuração local (nunca committar)
+.env
+.env.*
+*.local.json
+appsettings.*.local.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores / IDEs
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# Vercel (gerado ao rodar `vercel` localmente)
+.vercel
+
+# Backups locais que os scripts em scripts/ geram
+*.bak
+*.fbk

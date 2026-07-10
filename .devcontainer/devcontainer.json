@@ -1,0 +1,22 @@
+{
+  "name": "ProjetoAtual",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace/ProjetoAtual",
+  "forwardPorts": [5000, 5001, 5432],
+  "portsAttributes": {
+    "5000": { "label": "Web (HTTP)" },
+    "5001": { "label": "Web (HTTPS)" },
+    "5432": { "label": "Postgres" }
+  },
+  "postCreateCommand": "cd /workspace/ProjetoAtual && dotnet restore",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

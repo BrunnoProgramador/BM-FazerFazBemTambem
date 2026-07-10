@@ -1,0 +1,13 @@
+# Normaliza fins de linha: LF no repositorio, nativo no checkout.
+# Evita as "mudancas fantasmas" de CRLF entre maquinas diferentes.
+* text=auto
+
+# Scripts shell rodam dentro de container Linux: sempre LF
+*.sh text eol=lf
+
+# Scripts PowerShell: CRLF
+*.ps1 text eol=crlf
+
+# Binarios
+*.FB5 binary
+*.fbk binary

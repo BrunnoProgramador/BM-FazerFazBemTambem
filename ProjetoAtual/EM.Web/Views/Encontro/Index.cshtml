@@ -1,0 +1,125 @@
+@model IEnumerable<EM.Web.Models.EncontroModel>
+@{
+    ViewData["Title"] = "Frequência";
+    var turmas = Model?.Select(e => e.TurmaNome).Distinct().OrderBy(t => t).ToList() ?? new List<string?>();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Frequência</h1>
+        <p class="page-desc">Histórico de encontros com a presença de cada turma.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Encontro" asp-action="Registrar" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Registrar frequência
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <select id="filtroTurma" class="form-select" aria-label="Filtrar por turma">
+        <option value="">Todas as turmas</option>
+        @foreach (var t in turmas)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+    <input type="date" id="filtroData" class="form-control" style="max-width: 170px;"
+           aria-label="Filtrar por data" />
+</div>
+
+<div class="panel">
+    <table class="table-clean" id="tabelaEncontros">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Turma</th>
+                <th>Presença</th>
+                <th>Percentual</th>
+                <th class="col-acoes">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var e in Model)
+                {
+                    <tr data-turma="@e.TurmaNome" data-data="@e.Data.ToString("yyyy-MM-dd")">
+                        <td>@e.Data.ToString("dd/MM/yyyy")</td>
+                        <td>@e.TurmaNome</td>
+                        <td>@e.TotalPresentes de @e.TotalAlunos</td>
+                        <td>
+                            <span class="badge-suave @(e.Percentual >= 70 ? "badge-verde" : "badge-cinza")">
+                                @e.Percentual%
+                            </span>
+                        </td>
+                        <td class="col-acoes">
+                            <a asp-controller="Encontro" asp-action="Editar" asp-route-id="@e.Codigo"
+                               class="btn-icone" title="Editar presença">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn-icone perigo btn-excluir-encontro"
+                                    title="Excluir registro"
+                                    data-url="@Url.Action("Excluir", "Encontro", new { id = e.Codigo })"
+                                    data-info="@e.TurmaNome em @e.Data.ToString("dd/MM/yyyy")">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                <tr id="linhaVazia" class="d-none">
+                    <td colspan="5">
+                        <div class="estado-vazio py-4">
+                            <p class="mb-0">Nenhum encontro corresponde aos filtros.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="estado-vazio">
+                            <i class="bi bi-check2-square"></i>
+                            <p>Nenhuma frequência registrada ainda.</p>
+                            <a asp-controller="Encontro" asp-action="Registrar" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i> Registrar a primeira frequência
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const filtroTurma = document.getElementById("filtroTurma");
+        const filtroData = document.getElementById("filtroData");
+        const linhaVazia = document.getElementById("linhaVazia");
+
+        function aplicarFiltros() {
+            const turma = filtroTurma.value;
+            const data = filtroData.value;
+            let visiveis = 0;
+
+            document.querySelectorAll("#tabelaEncontros tbody tr[data-turma]").forEach(tr => {
+                const mostra = (!turma || tr.dataset.turma === turma)
+                    && (!data || tr.dataset.data === data);
+                tr.style.display = mostra ? "" : "none";
+                if (mostra) visiveis++;
+            });
+
+            linhaVazia?.classList.toggle("d-none", visiveis > 0);
+        }
+
+        filtroTurma?.addEventListener("change", aplicarFiltros);
+        filtroData?.addEventListener("change", aplicarFiltros);
+
+        document.querySelectorAll(".btn-excluir-encontro").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url,
+                    `Excluir o registro de frequência de ${btn.dataset.info}?`)));
+    </script>
+}

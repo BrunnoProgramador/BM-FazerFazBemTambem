@@ -1,0 +1,175 @@
+@using EM.Domain.Utilitarios
+@model EM.Web.Models.RelatorioModel
+@{
+    ViewData["Title"] = "Relatórios";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Relatórios</h1>
+        <p class="page-desc">Resumo de presença por turma e por aluno.</p>
+    </div>
+</div>
+
+<!-- Presença por turma -->
+<div class="panel mb-4">
+    <div class="panel-body pb-0">
+        <h2 class="panel-titulo">Presença por turma</h2>
+    </div>
+    <table class="table-clean">
+        <thead>
+            <tr>
+                <th>Turma</th>
+                <th>Alunos</th>
+                <th>Encontros</th>
+                <th>Último encontro</th>
+                <th>Presença média</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Turmas.Any())
+            {
+                @foreach (var t in Model.Turmas)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Turma" asp-action="Alunos" asp-route-id="@t.Codigo">@t.Nome</a>
+                        </td>
+                        <td>@t.TotalAlunos</td>
+                        <td>@t.Encontros</td>
+                        <td>@(t.UltimoEncontro?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>
+                            @if (t.Encontros > 0)
+                            {
+                                <span class="badge-suave @(t.PercentualMedio >= 70 ? "badge-verde" : "badge-cinza")">
+                                    @t.PercentualMedio%
+                                </span>
+                            }
+                            else
+                            {
+                                <text>—</text>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="estado-vazio py-4">
+                            <p class="mb-0">Nenhuma turma cadastrada.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Presença por aluno -->
+<div class="panel">
+    <div class="panel-body pb-0">
+        <h2 class="panel-titulo">Presença por aluno</h2>
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+            <input type="text" id="filtroAluno" class="form-control form-control-sm" style="max-width: 280px;"
+                   placeholder="Pesquisar aluno..." />
+            <select id="filtroStatus" class="form-select form-select-sm" style="max-width: 200px;">
+                <option value="">Todos os status</option>
+                @foreach (var s in EnumeradorStatusAluno.Todos)
+                {
+                    <option value="@s.Codigo" selected="@(s.Codigo == 0)">@s.Descricao</option>
+                }
+            </select>
+        </div>
+    </div>
+    <table class="table-clean" id="tabelaAlunos">
+        <thead>
+            <tr>
+                <th>Aluno</th>
+                <th>Última presença</th>
+                <th>Presenças</th>
+                <th>%</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Alunos.Any())
+            {
+                @foreach (var a in Model.Alunos)
+                {
+                    <tr data-busca="@a.Nome.ToLowerInvariant()" data-status="@a.StatusCodigo">
+                        <td>
+                            <a asp-controller="Aluno" asp-action="Perfil" asp-route-id="@a.Matricula">@a.Nome</a>
+                            @if (a.StatusCodigo != 0)
+                            {
+                                <span class="badge-suave badge-cinza ms-1">
+                                    @EnumeradorStatusAluno.ObtenhaPorCodigo(a.StatusCodigo).Descricao
+                                </span>
+                            }
+                        </td>
+                        <td>@(a.UltimaPresenca?.ToString("dd/MM/yyyy") ?? "Nunca veio")</td>
+                        <td>@a.TotalPresencas de @a.TotalEncontros</td>
+                        <td>
+                            @if (a.TotalEncontros > 0)
+                            {
+                                <span class="badge-suave @(a.Percentual >= 70 ? "badge-verde" : "badge-cinza")">
+                                    @a.Percentual%
+                                </span>
+                            }
+                            else
+                            {
+                                <text>—</text>
+                            }
+                        </td>
+                    </tr>
+                }
+                <tr id="linhaVazia" class="d-none">
+                    <td colspan="4">
+                        <div class="estado-vazio py-4">
+                            <p class="mb-0">Nenhum aluno corresponde aos filtros.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4">
+                        <div class="estado-vazio py-4">
+                            <p class="mb-0">Nenhum aluno cadastrado.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const filtroAluno = document.getElementById("filtroAluno");
+        const filtroStatus = document.getElementById("filtroStatus");
+        const linhaVazia = document.getElementById("linhaVazia");
+
+        function aplicarFiltros() {
+            const termo = filtroAluno.value.trim().toLowerCase();
+            const status = filtroStatus.value;
+            let visiveis = 0;
+
+            document.querySelectorAll("#tabelaAlunos tbody tr[data-busca]").forEach(tr => {
+                const mostra = (!termo || tr.dataset.busca.includes(termo))
+                    && (!status || tr.dataset.status === status);
+                tr.style.display = mostra ? "" : "none";
+                if (mostra) visiveis++;
+            });
+
+            linhaVazia?.classList.toggle("d-none", visiveis > 0);
+        }
+
+        filtroAluno?.addEventListener("input", aplicarFiltros);
+        filtroStatus?.addEventListener("change", aplicarFiltros);
+
+        // Aplica o filtro inicial (status "Ativo" pré-selecionado)
+        aplicarFiltros();
+    </script>
+}

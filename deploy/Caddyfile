@@ -1,0 +1,6 @@
+# HTTPS automático via Let's Encrypt para o domínio definido no .env
+# (DuckDNS ou similar serve). O Caddy renova o certificado sozinho.
+
+{$DOMINIO} {
+    reverse_proxy web:8080
+}
