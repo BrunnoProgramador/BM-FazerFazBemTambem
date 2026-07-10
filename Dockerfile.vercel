@@ -1,0 +1,21 @@
+# Dockerfile.vercel
+# A Vercel detecta este arquivo automaticamente na raiz do projeto e roda
+# a aplicação como um container (Vercel Function), sem precisar de suporte
+# nativo a .NET na plataforma. Documentação: https://vercel.com/docs/functions/container-images
+
+# --- Etapa 1: build/publish com o SDK completo ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY ProjetoAtual/ .
+RUN dotnet publish EM.Web/EM.Web.csproj -c Release -o /app/publish
+
+# --- Etapa 2: imagem final, só com o runtime (bem menor) ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# A Vercel injeta a variável PORT em tempo de execução (padrão 80).
+# O ASP.NET Core precisa escutar exatamente nessa porta.
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 80
+CMD ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-80} dotnet EM.Web.dll"]
