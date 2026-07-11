@@ -1,0 +1,126 @@
+@using EM.Domain
+@model EM.Web.Models.NovoUsuarioModel
+@{
+    ViewData["Title"] = "Configurações";
+    var usuarios = (List<Usuario>)ViewBag.Usuarios;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Configurações · Usuários</h1>
+        <p class="page-desc">Quem pode entrar no sistema. Somente você (administrador) gerencia esta lista.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Usuários cadastrados -->
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="panel-body pb-0">
+                <h2 class="panel-titulo">
+                    Usuários
+                    <span class="badge-suave badge-azul ms-1">@usuarios.Count</span>
+                </h2>
+            </div>
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Login</th>
+                        <th>Situação</th>
+                        <th class="col-acoes"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in usuarios)
+                    {
+                        <tr>
+                            <td>@u.Nome</td>
+                            <td>@u.Login</td>
+                            <td>
+                                @if (u.EhAdministrador)
+                                {
+                                    <span class="badge-suave badge-azul">Administrador</span>
+                                }
+                                else if (u.DeveTrocarSenha)
+                                {
+                                    <span class="badge-suave badge-cinza">Aguardando 1º acesso</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-suave badge-verde">Ativo</span>
+                                }
+                            </td>
+                            <td class="col-acoes">
+                                @if (!u.EhAdministrador)
+                                {
+                                    <button type="button" class="btn-icone perigo btn-excluir-usuario"
+                                            title="Excluir usuário"
+                                            data-url="@Url.Action("Excluir", "Usuario", new { id = u.Codigo })"
+                                            data-nome="@u.Login">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Novo usuário -->
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-body">
+                <h2 class="panel-titulo">Novo usuário</h2>
+
+                <form asp-controller="Usuario" asp-action="Cadastrar" method="post">
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"
+                         style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Nome" class="form-label">Nome</label>
+                        <input asp-for="Nome" class="form-control" placeholder="Nome da pessoa" maxlength="100" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Login" class="form-label">Login</label>
+                        <input asp-for="Login" class="form-control" placeholder="letras e números, sem espaços" maxlength="50" />
+                    </div>
+
+                    <div class="row">
+                        <div class="mb-3 col-md-6">
+                            <label asp-for="SenhaProvisoria" class="form-label">Senha provisória</label>
+                            <input asp-for="SenhaProvisoria" type="password" class="form-control" autocomplete="new-password" />
+                        </div>
+                        <div class="mb-3 col-md-6">
+                            <label asp-for="Confirmacao" class="form-label">Confirmação</label>
+                            <input asp-for="Confirmacao" type="password" class="form-control" autocomplete="new-password" />
+                        </div>
+                    </div>
+
+                    <div class="form-dica mb-3">
+                        Passe o login e a senha provisória para a pessoa — no primeiro
+                        acesso o sistema obriga a troca por uma senha só dela.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-1"></i> Cadastrar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".btn-excluir-usuario").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url,
+                    `Excluir o usuário "${btn.dataset.nome}"? A pessoa perde o acesso ao sistema.`)));
+    </script>
+}

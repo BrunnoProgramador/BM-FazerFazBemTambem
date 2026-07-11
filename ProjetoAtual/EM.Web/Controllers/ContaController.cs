@@ -52,12 +52,19 @@ public class ContaController : Controller
         await EntrarAsync(usuario, model.Lembrar);
         _logger.LogInformation("Usuário {Login} entrou no sistema.", usuario.Login);
 
+        // Senha provisória: obriga a troca antes de qualquer outra tela
+        if (usuario.DeveTrocarSenha)
+            return RedirectToAction("TrocarSenha");
+
         return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
             ? Redirect(returnUrl)
             : RedirectToAction("Index", "Dashboard");
     }
 
-    /// <summary>Configuração inicial: cria o primeiro usuário quando o sistema está vazio.</summary>
+    /// <summary>
+    /// Primeiro acesso: o usuário é "administrador" (ou "admin", tanto faz) —
+    /// a pessoa só define a senha dele aqui.
+    /// </summary>
     [AllowAnonymous]
     [HttpGet]
     public IActionResult Configurar()
@@ -65,26 +72,56 @@ public class ContaController : Controller
         if (_fachada.ExisteUsuario())
             return RedirectToAction("Login");
 
-        return View(new PrimeiroUsuarioModel());
+        return View(new SenhaAdministradorModel());
     }
 
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Configurar(PrimeiroUsuarioModel model)
+    public async Task<IActionResult> Configurar(SenhaAdministradorModel model)
     {
         if (_fachada.ExisteUsuario())
             return RedirectToAction("Login");
 
         try
         {
-            var usuario = _fachada.CriarPrimeiroUsuario(
-                model.Login, model.Nome, model.Senha, model.ConfirmacaoSenha);
+            var usuario = _fachada.CriarAdministrador(model.Senha, model.Confirmacao);
 
             await EntrarAsync(usuario, lembrar: true);
-            _logger.LogInformation("Primeiro usuário {Login} criado e autenticado.", usuario.Login);
+            _logger.LogInformation("Administrador criado e autenticado no primeiro acesso.");
 
-            TempData["Sucesso"] = $"Bem-vindo(a), {usuario.Nome}! O sistema está pronto para uso.";
+            TempData["Sucesso"] = "Senha do administrador definida. O sistema está pronto para uso!";
+            return RedirectToAction("Index", "Dashboard");
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
+        }
+    }
+
+    // ── troca de senha (obrigatória quando provisória) ─────────
+
+    [HttpGet]
+    public IActionResult TrocarSenha()
+    {
+        return View(new TrocarSenhaModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TrocarSenha(TrocarSenhaModel model)
+    {
+        try
+        {
+            var codigo = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var usuario = _fachada.TrocarSenha(codigo, model.NovaSenha, model.Confirmacao);
+
+            // Reemite o cookie sem a marcação de troca pendente
+            await EntrarAsync(usuario, lembrar: false);
+            _logger.LogInformation("Usuário {Login} trocou a própria senha.", usuario.Login);
+
+            TempData["Sucesso"] = "Senha alterada com sucesso.";
             return RedirectToAction("Index", "Dashboard");
         }
         catch (ArgumentException ex)
@@ -114,6 +151,12 @@ public class ContaController : Controller
             new(ClaimTypes.Name, usuario.Nome),
             new("login", usuario.Login)
         };
+
+        if (usuario.EhAdministrador)
+            claims.Add(new Claim("admin", "1"));
+
+        if (usuario.DeveTrocarSenha)
+            claims.Add(new Claim("trocar_senha", "1"));
 
         var identidade = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 

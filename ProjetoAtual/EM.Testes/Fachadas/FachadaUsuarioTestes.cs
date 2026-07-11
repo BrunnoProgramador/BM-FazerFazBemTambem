@@ -15,84 +15,139 @@ public class FachadaUsuarioTestes
         _fachada = new FachadaUsuario(_repositorio);
     }
 
-    // ── primeiro usuário ───────────────────────────────────────
+    // ── primeiro acesso (administrador) ────────────────────────
 
     [Fact]
-    public void Cria_primeiro_usuario_com_login_normalizado()
+    public void Primeiro_acesso_cria_o_administrador_definindo_so_a_senha()
     {
-        var usuario = _fachada.CriarPrimeiroUsuario("  Admin ", "Brunno Santos", "senhaForte1", "senhaForte1");
+        var usuario = _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
 
-        Assert.Equal("admin", usuario.Login);
-        Assert.Equal("Brunno Santos", usuario.Nome);
-        Assert.True(usuario.Codigo > 0);
+        Assert.Equal("administrador", usuario.Login);
+        Assert.True(usuario.EhAdministrador);
+        Assert.False(usuario.DeveTrocarSenha);
         Assert.True(_fachada.ExisteUsuario());
     }
 
     [Fact]
-    public void Nao_cria_segundo_usuario_pela_configuracao_inicial()
+    public void Nao_cria_administrador_duas_vezes()
     {
-        _fachada.CriarPrimeiroUsuario("admin", "Administrador", "senhaForte1", "senhaForte1");
+        _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
 
         Assert.Throws<ArgumentException>(() =>
-            _fachada.CriarPrimeiroUsuario("outro", "Outro", "senhaForte1", "senhaForte1"));
+            _fachada.CriarAdministrador("outraSenha1", "outraSenha1"));
     }
+
+    [Fact]
+    public void Senha_curta_ou_confirmacao_errada_falham()
+    {
+        Assert.Throws<ArgumentException>(() => _fachada.CriarAdministrador("1234567", "1234567"));
+        Assert.Throws<ArgumentException>(() => _fachada.CriarAdministrador("senhaForte1", "senhaForte2"));
+    }
+
+    // ── autenticação (apelidos do admin) ───────────────────────
 
     [Theory]
-    [InlineData("ab")]                     // login curto
-    [InlineData("login com espaço")]       // caractere inválido
-    [InlineData("usuário")]                // acento
-    public void Login_invalido_falha(string login)
+    [InlineData("administrador")]
+    [InlineData("ADMINISTRADOR")]
+    [InlineData("admin")]
+    [InlineData("Admin")]
+    [InlineData("  admin  ")]
+    public void Admin_entra_escrevendo_o_login_de_qualquer_jeito(string login)
     {
-        Assert.Throws<ArgumentException>(() =>
-            _fachada.CriarPrimeiroUsuario(login, "Nome Completo", "senhaForte1", "senhaForte1"));
-    }
+        _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
 
-    [Fact]
-    public void Senha_curta_falha()
-    {
-        Assert.Throws<ArgumentException>(() =>
-            _fachada.CriarPrimeiroUsuario("admin", "Administrador", "1234567", "1234567"));
-    }
-
-    [Fact]
-    public void Confirmacao_diferente_falha()
-    {
-        Assert.Throws<ArgumentException>(() =>
-            _fachada.CriarPrimeiroUsuario("admin", "Administrador", "senhaForte1", "senhaForte2"));
-    }
-
-    // ── autenticação ───────────────────────────────────────────
-
-    [Fact]
-    public void Autentica_com_credenciais_corretas()
-    {
-        _fachada.CriarPrimeiroUsuario("admin", "Administrador", "senhaForte1", "senhaForte1");
-
-        var usuario = _fachada.Autenticar("ADMIN", "senhaForte1"); // login com caixa diferente
+        var usuario = _fachada.Autenticar(login, "senhaForte1");
         Assert.NotNull(usuario);
-        Assert.Equal("admin", usuario!.Login);
+        Assert.True(usuario!.EhAdministrador);
     }
 
     [Fact]
     public void Senha_errada_retorna_null()
     {
-        _fachada.CriarPrimeiroUsuario("admin", "Administrador", "senhaForte1", "senhaForte1");
+        _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
         Assert.Null(_fachada.Autenticar("admin", "senhaErrada"));
     }
 
+    // ── cadastro de usuários pelo admin ────────────────────────
+
     [Fact]
-    public void Usuario_inexistente_retorna_null()
+    public void Usuario_cadastrado_nasce_com_troca_de_senha_pendente()
     {
-        Assert.Null(_fachada.Autenticar("ninguem", "qualquer"));
+        var usuario = _fachada.CadastrarUsuario("maria", "Maria Silva", "provisoria1", "provisoria1");
+
+        Assert.True(usuario.DeveTrocarSenha);
+        Assert.False(usuario.EhAdministrador);
+        Assert.NotNull(_fachada.Autenticar("maria", "provisoria1"));
     }
 
     [Theory]
-    [InlineData(null, "senha")]
-    [InlineData("login", null)]
-    [InlineData("", "")]
-    public void Credenciais_vazias_retornam_null(string? login, string? senha)
+    [InlineData("admin")]
+    [InlineData("administrador")]
+    public void Logins_reservados_do_admin_sao_rejeitados(string login)
     {
-        Assert.Null(_fachada.Autenticar(login, senha));
+        Assert.Throws<ArgumentException>(() =>
+            _fachada.CadastrarUsuario(login, "Fulano", "provisoria1", "provisoria1"));
+    }
+
+    [Fact]
+    public void Login_duplicado_eh_rejeitado()
+    {
+        _fachada.CadastrarUsuario("maria", "Maria Silva", "provisoria1", "provisoria1");
+
+        Assert.Throws<ArgumentException>(() =>
+            _fachada.CadastrarUsuario("MARIA", "Outra Maria", "provisoria1", "provisoria1"));
+    }
+
+    // ── troca de senha ─────────────────────────────────────────
+
+    [Fact]
+    public void Trocar_senha_libera_o_acesso_e_invalida_a_provisoria()
+    {
+        var usuario = _fachada.CadastrarUsuario("joao", "João Souza", "provisoria1", "provisoria1");
+
+        var atualizado = _fachada.TrocarSenha(usuario.Codigo, "definitiva1", "definitiva1");
+
+        Assert.False(atualizado.DeveTrocarSenha);
+        Assert.NotNull(_fachada.Autenticar("joao", "definitiva1"));
+        Assert.Null(_fachada.Autenticar("joao", "provisoria1"));
+    }
+
+    [Fact]
+    public void Nova_senha_igual_a_provisoria_eh_rejeitada()
+    {
+        var usuario = _fachada.CadastrarUsuario("joao", "João Souza", "provisoria1", "provisoria1");
+
+        Assert.Throws<ArgumentException>(() =>
+            _fachada.TrocarSenha(usuario.Codigo, "provisoria1", "provisoria1"));
+    }
+
+    // ── exclusão ───────────────────────────────────────────────
+
+    [Fact]
+    public void Administrador_nao_pode_ser_excluido()
+    {
+        var admin = _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
+        var outro = _fachada.CadastrarUsuario("maria", "Maria Silva", "provisoria1", "provisoria1");
+
+        Assert.Throws<ArgumentException>(() => _fachada.ExcluirUsuario(admin.Codigo, outro.Codigo));
+    }
+
+    [Fact]
+    public void Ninguem_exclui_a_si_mesmo()
+    {
+        var admin = _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
+        Assert.Throws<ArgumentException>(() => _fachada.ExcluirUsuario(admin.Codigo, admin.Codigo));
+    }
+
+    [Fact]
+    public void Admin_exclui_usuario_comum()
+    {
+        var admin = _fachada.CriarAdministrador("senhaForte1", "senhaForte1");
+        var outro = _fachada.CadastrarUsuario("maria", "Maria Silva", "provisoria1", "provisoria1");
+
+        _fachada.ExcluirUsuario(outro.Codigo, admin.Codigo);
+
+        Assert.Null(_fachada.Autenticar("maria", "provisoria1"));
     }
 }
 
@@ -105,7 +160,15 @@ internal class FakeRepositorioUsuario : IRepositorioUsuario
     public Usuario? GetByLogin(string login) =>
         _usuarios.FirstOrDefault(u => u.Login == login);
 
+    public Usuario? GetByCodigo(int codigo) =>
+        _usuarios.FirstOrDefault(u => u.Codigo == codigo);
+
+    public Usuario? ObterAdministrador() =>
+        _usuarios.FirstOrDefault(u => u.EhAdministrador);
+
     public int Contar() => _usuarios.Count;
+
+    public IEnumerable<Usuario> ObterTodos() => _usuarios.OrderBy(u => u.Nome);
 
     public int Adicionar(Usuario entidade)
     {
@@ -113,4 +176,13 @@ internal class FakeRepositorioUsuario : IRepositorioUsuario
         _usuarios.Add(entidade);
         return entidade.Codigo;
     }
+
+    public void Atualizar(Usuario entidade)
+    {
+        var indice = _usuarios.FindIndex(u => u.Codigo == entidade.Codigo);
+        if (indice >= 0) _usuarios[indice] = entidade;
+    }
+
+    public void Excluir(int codigo) =>
+        _usuarios.RemoveAll(u => u.Codigo == codigo);
 }

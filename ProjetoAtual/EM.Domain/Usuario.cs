@@ -15,4 +15,10 @@ public class Usuario : IEntidade
 
     /// <summary>Hash PBKDF2 da senha no formato "iterações.salt.hash" (Base64).</summary>
     public string Hash { get; set; }
+
+    /// <summary>Administrador do sistema (único que gerencia usuários).</summary>
+    public bool EhAdministrador { get; set; }
+
+    /// <summary>Senha provisória: obriga a troca no próximo login.</summary>
+    public bool DeveTrocarSenha { get; set; }
 }

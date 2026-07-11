@@ -7,11 +7,25 @@ public class LoginModel
     public bool Lembrar { get; set; }
 }
 
-/// <summary>Criação do primeiro usuário (configuração inicial do sistema).</summary>
-public class PrimeiroUsuarioModel
+/// <summary>Primeiro acesso: só define a senha do usuário "administrador".</summary>
+public class SenhaAdministradorModel
 {
-    public string? Login { get; set; }
-    public string? Nome { get; set; }
     public string? Senha { get; set; }
-    public string? ConfirmacaoSenha { get; set; }
+    public string? Confirmacao { get; set; }
+}
+
+/// <summary>Troca de senha do próprio usuário (obrigatória quando provisória).</summary>
+public class TrocarSenhaModel
+{
+    public string? NovaSenha { get; set; }
+    public string? Confirmacao { get; set; }
+}
+
+/// <summary>Cadastro de usuário pelo administrador (senha provisória).</summary>
+public class NovoUsuarioModel
+{
+    public string? Nome { get; set; }
+    public string? Login { get; set; }
+    public string? SenhaProvisoria { get; set; }
+    public string? Confirmacao { get; set; }
 }
