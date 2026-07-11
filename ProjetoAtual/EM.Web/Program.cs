@@ -2,12 +2,46 @@ using EM.Domain.Fachadas;
 using EM.Domain.Interfaces;
 using EM.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres");
+
+// Apara espaços, quebras de linha e aspas que vêm de acidentes de
+// copiar/colar no painel de variáveis de ambiente.
+connectionString = connectionString?.Trim().Trim('"', '\'').Trim();
+
+// Aceita tanto o formato keyword ("Host=...;Username=...") quanto a URL
+// que o Neon/Vercel fornecem ("postgresql://usuario:senha@host/banco?...").
+// O Npgsql só entende o primeiro; aqui convertemos quando vier URL.
+if (connectionString != null &&
+    (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)))
+{
+    var uri = new Uri(connectionString);
+    var dadosUsuario = uri.UserInfo.Split(':', 2);
+
+    connectionString = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Database = uri.AbsolutePath.TrimStart('/'),
+        Username = Uri.UnescapeDataString(dadosUsuario[0]),
+        Password = dadosUsuario.Length > 1 ? Uri.UnescapeDataString(dadosUsuario[1]) : "",
+        SslMode = Npgsql.SslMode.Require
+    }.ConnectionString;
+}
+
+// Chaves de criptografia de cookie persistidas no Postgres: sem isso,
+// cada instância serverless do Vercel gera chaves próprias e os logins
+// caem aleatoriamente (a tabela é criada sozinha na subida).
+builder.Services.AddDataProtection()
+    .SetApplicationName("FazerBemFazBemTambem")
+    .AddKeyManagementOptions(opcoes =>
+        opcoes.XmlRepository = new EM.Web.Infraestrutura.RepositorioChavesDataProtection(connectionString!));
 
 // Autenticação por cookie: toda tela exige login, exceto as marcadas
 // com [AllowAnonymous] (login e configuração inicial).
@@ -24,11 +58,20 @@ builder.Services
         opcoes.Cookie.SameSite = SameSiteMode.Lax;
     });
 
+// Política de administrador (gestão de usuários nas Configurações)
+builder.Services.AddAuthorization(opcoes =>
+{
+    opcoes.AddPolicy("SomenteAdministrador", politica => politica.RequireClaim("admin", "1"));
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews(opcoes =>
 {
     // Exige usuário autenticado em todos os controllers por padrão
     opcoes.Filters.Add(new AuthorizeFilter());
+
+    // Senha provisória: trava a navegação até o usuário trocar a senha
+    opcoes.Filters.Add(new EM.Web.Infraestrutura.FiltroTrocaSenhaObrigatoria());
 });
 builder.Services.AddScoped<IRepositorioAluno>(sp => new RepositorioAluno(connectionString));
 builder.Services.AddScoped<IRepositorioTurma>(sp => new RepositorioTurma(connectionString));
