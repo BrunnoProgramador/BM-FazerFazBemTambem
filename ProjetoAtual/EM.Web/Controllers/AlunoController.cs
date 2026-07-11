@@ -156,6 +156,7 @@ public class AlunoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "SomenteAdministrador")]
     public IActionResult Excluir(int id)
     {
         try
@@ -180,7 +181,6 @@ public class AlunoController : Controller
         idade        = a.Idade,
         sexo         = a.Sexo.Descricao,
         nascimento   = a.Nascimento.ToString("dd/MM/yyyy"),
-        cpf          = a.CPF ?? "",
         cidade       = MontarLocal(a),
         status       = a.Status.Descricao,
         statusCodigo = a.Status.Codigo
@@ -199,7 +199,6 @@ public class AlunoController : Controller
         Nome                  = aluno.Nome,
         Sexo                  = aluno.Sexo,
         DataNascimento        = aluno.Nascimento,
-        CPF                   = aluno.CPF,
         Cidade                = aluno.Cidade,
         Bairro                = aluno.Bairro,
         ResponsavelNome       = aluno.ResponsavelNome,
@@ -214,7 +213,6 @@ public class AlunoController : Controller
         Nome                  = model.Nome,
         Sexo                  = model.Sexo,
         Nascimento            = model.DataNascimento,
-        CPF                   = model.CPF,
         Cidade                = model.Cidade,
         Bairro                = model.Bairro,
         ResponsavelNome       = model.ResponsavelNome,

@@ -142,7 +142,6 @@ internal class FakeRepositorioAluno : IRepositorioAluno
     {
         Matricula             = a.Matricula,
         Nome                  = a.Nome,
-        CPF                   = a.CPF,
         Nascimento            = a.Nascimento,
         Sexo                  = a.Sexo,
         Cidade                = a.Cidade,

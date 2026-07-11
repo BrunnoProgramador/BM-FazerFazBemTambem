@@ -68,9 +68,9 @@ public class EncontroController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Gravar(int turmaCodigo, DateTime data, int[] matriculas, int[] presentes)
+    public IActionResult Gravar(int turmaCodigo, DateTime data, string? conteudo, int[] matriculas, int[] presentes)
     {
-        var encontro = MontarEncontro(0, turmaCodigo, data, matriculas, presentes);
+        var encontro = MontarEncontro(0, turmaCodigo, data, conteudo, matriculas, presentes);
 
         try
         {
@@ -89,9 +89,9 @@ public class EncontroController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Atualize(int codigo, int turmaCodigo, DateTime data, int[] matriculas, int[] presentes)
+    public IActionResult Atualize(int codigo, int turmaCodigo, DateTime data, string? conteudo, int[] matriculas, int[] presentes)
     {
-        var encontro = MontarEncontro(codigo, turmaCodigo, data, matriculas, presentes);
+        var encontro = MontarEncontro(codigo, turmaCodigo, data, conteudo, matriculas, presentes);
 
         try
         {
@@ -109,6 +109,7 @@ public class EncontroController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "SomenteAdministrador")]
     public IActionResult Excluir(int id)
     {
         try
@@ -132,7 +133,7 @@ public class EncontroController : Controller
         ViewBag.Turmas = new SelectList(turmas, "Codigo", "Nome", selecionada);
     }
 
-    private Encontro MontarEncontro(int codigo, int turmaCodigo, DateTime data, int[] matriculas, int[] presentes)
+    private Encontro MontarEncontro(int codigo, int turmaCodigo, DateTime data, string? conteudo, int[] matriculas, int[] presentes)
     {
         var setPresentes = presentes.ToHashSet();
         var nomes = turmaCodigo > 0
@@ -161,6 +162,7 @@ public class EncontroController : Controller
             Codigo = codigo,
             Turma = new Turma { Codigo = turmaCodigo, Nome = _fachadaTurma.ObterPorCodigo(turmaCodigo)?.Nome },
             Data = data,
+            Conteudo = string.IsNullOrWhiteSpace(conteudo) ? null : conteudo.Trim(),
             Presencas = matriculas
                 .Distinct()
                 .Where(permitidos.Contains)
@@ -178,6 +180,7 @@ public class EncontroController : Controller
         TurmaCodigo    = e.Turma.Codigo,
         TurmaNome      = e.Turma.Nome,
         Data           = e.Data,
+        Conteudo       = e.Conteudo,
         TotalAlunos    = e.TotalAlunos,
         TotalPresentes = e.TotalPresentes,
         Presencas      = e.Presencas.ConvertAll(p => new PresencaModel
@@ -195,6 +198,7 @@ public class EncontroController : Controller
         TurmaCodigo = e.Turma?.Codigo ?? 0,
         TurmaNome   = e.Turma?.Nome,
         Data        = e.Data,
+        Conteudo    = e.Conteudo,
         Presencas   = e.Presencas.ConvertAll(p => new PresencaModel
         {
             Matricula = p.Aluno.Matricula,

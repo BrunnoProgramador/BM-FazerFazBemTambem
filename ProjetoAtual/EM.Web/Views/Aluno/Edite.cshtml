@@ -44,10 +44,6 @@
                         <option value="@EnumeradorSexo.Feminino.Codigo" selected="@femSelecionado">Feminino</option>
                     </select>
                 </div>
-                <div class="mb-3 col-md-4">
-                    <label asp-for="CPF" class="form-label">CPF <span class="text-muted fw-normal">(opcional)</span></label>
-                    <input asp-for="CPF" class="form-control" placeholder="000.000.000-00" id="cpf" maxlength="14" />
-                </div>
             </div>
 
             <div class="row">
@@ -115,16 +111,3 @@
         </form>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Máscara de CPF
-        document.getElementById("cpf").addEventListener("input", function () {
-            let v = this.value.replace(/\D/g, "");
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-            this.value = v;
-        });
-    </script>
-}

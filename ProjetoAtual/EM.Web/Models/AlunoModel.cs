@@ -9,7 +9,6 @@ public class AlunoModel
     public string Nome { get; set; }
     public EnumeradorSexo Sexo { get; set; }
     public DateTime DataNascimento { get; set; }
-    public string? CPF { get; set; }
     public string? Cidade { get; set; }
     public string? Bairro { get; set; }
     public string? ResponsavelNome { get; set; }

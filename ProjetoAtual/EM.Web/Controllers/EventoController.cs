@@ -72,6 +72,7 @@ public class EventoController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "SomenteAdministrador")]
     public IActionResult Excluir(int id)
     {
         try

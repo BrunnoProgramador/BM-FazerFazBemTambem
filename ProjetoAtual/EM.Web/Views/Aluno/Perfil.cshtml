@@ -203,11 +203,20 @@
                 <p class="text-muted" style="font-size:.85rem;">
                     Apaga o aluno e todo o histórico definitivamente. Na dúvida, use o status acima.
                 </p>
-                <button type="button" class="btn btn-sm btn-excluir" id="btnExcluirAluno"
-                        data-url="@Url.Action("Excluir", "Aluno", new { id = a.Matricula })"
-                        data-nome="@a.Nome">
-                    <i class="bi bi-trash me-1"></i> Excluir definitivamente
-                </button>
+                @if (User.HasClaim("admin", "1"))
+                {
+                    <button type="button" class="btn btn-sm btn-excluir" id="btnExcluirAluno"
+                            data-url="@Url.Action("Excluir", "Aluno", new { id = a.Matricula })"
+                            data-nome="@a.Nome">
+                        <i class="bi bi-trash me-1"></i> Excluir definitivamente
+                    </button>
+                }
+                else
+                {
+                    <p class="text-muted mb-0" style="font-size:.85rem;">
+                        Somente o administrador pode excluir cadastros.
+                    </p>
+                }
             </div>
         </div>
     </div>

@@ -4,6 +4,7 @@ using EM.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,7 +57,22 @@ builder.Services
         opcoes.Cookie.Name = "FazerBemFazBemTambem.Auth";
         opcoes.Cookie.HttpOnly = true;
         opcoes.Cookie.SameSite = SameSiteMode.Lax;
+        opcoes.Cookie.SecurePolicy = CookieSecurePolicy.Always; // site é sempre HTTPS (Vercel)
     });
+
+// Limite de tentativas de login por IP (proteção contra força bruta)
+builder.Services.AddRateLimiter(opcoes =>
+{
+    opcoes.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opcoes.AddPolicy("login", contexto =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            contexto.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
 
 // Política de administrador (gestão de usuários nas Configurações)
 builder.Services.AddAuthorization(opcoes =>
@@ -126,6 +142,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

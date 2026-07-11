@@ -56,12 +56,15 @@
                                class="btn-icone" title="Editar evento">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <button type="button" class="btn-icone perigo btn-excluir-evento"
-                                    title="Excluir evento"
-                                    data-url="@Url.Action("Excluir", "Evento", new { id = e.Codigo })"
-                                    data-nome="@e.Nome">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            @if (User.HasClaim("admin", "1"))
+                            {
+                                <button type="button" class="btn-icone perigo btn-excluir-evento"
+                                        title="Excluir evento"
+                                        data-url="@Url.Action("Excluir", "Evento", new { id = e.Codigo })"
+                                        data-nome="@e.Nome">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }

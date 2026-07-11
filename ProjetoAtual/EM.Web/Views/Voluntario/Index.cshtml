@@ -62,12 +62,15 @@
                                class="btn-icone" title="Editar voluntário">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <button type="button" class="btn-icone perigo btn-excluir-voluntario"
-                                    title="Excluir voluntário"
-                                    data-url="@Url.Action("Excluir", "Voluntario", new { id = v.Codigo })"
-                                    data-nome="@v.Nome">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            @if (User.HasClaim("admin", "1"))
+                            {
+                                <button type="button" class="btn-icone perigo btn-excluir-voluntario"
+                                        title="Excluir voluntário"
+                                        data-url="@Url.Action("Excluir", "Voluntario", new { id = v.Codigo })"
+                                        data-nome="@v.Nome">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }

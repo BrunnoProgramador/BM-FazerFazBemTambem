@@ -7,7 +7,31 @@ namespace EM.Repository;
 
 public class RepositorioEncontro : RepositorioAbstrato<Encontro>, IRepositorioEncontro
 {
-    public RepositorioEncontro(string connectionString) : base(connectionString) { }
+    private static bool _migrado;
+    private static readonly object _travaMigracao = new();
+
+    public RepositorioEncontro(string connectionString) : base(connectionString)
+    {
+        GarantirColunaConteudo();
+    }
+
+    /// <summary>Automigração (uma vez por processo): coluna de conteúdo do encontro.</summary>
+    private void GarantirColunaConteudo()
+    {
+        if (_migrado) return;
+        lock (_travaMigracao)
+        {
+            if (_migrado) return;
+
+            using var conexao = CriarConexao();
+            using var comando = conexao.CreateCommand();
+            comando.CommandText =
+                "ALTER TABLE TBENCONTRO ADD COLUMN IF NOT EXISTS ENCCONTEUDO VARCHAR(500)";
+            comando.ExecuteNonQuery();
+
+            _migrado = true;
+        }
+    }
 
     public void Adicionar(Encontro entidade)
     {
@@ -16,12 +40,14 @@ public class RepositorioEncontro : RepositorioAbstrato<Encontro>, IRepositorioEn
 
         int codigo;
         using (var comando = new NpgsqlCommand(
-            "INSERT INTO TBENCONTRO (ENCCODIGO, ENCTURMA, ENCDATA) " +
-            "VALUES (nextval('gen_tbencontro'), @turma, @data) RETURNING ENCCODIGO",
+            "INSERT INTO TBENCONTRO (ENCCODIGO, ENCTURMA, ENCDATA, ENCCONTEUDO) " +
+            "VALUES (nextval('gen_tbencontro'), @turma, @data, @conteudo) RETURNING ENCCODIGO",
             conexao, transacao))
         {
             comando.Parameters.Add(new NpgsqlParameter("@turma", entidade.Turma.Codigo));
             comando.Parameters.Add(new NpgsqlParameter("@data",  ParaInteiro(entidade.Data)));
+            comando.Parameters.Add(new NpgsqlParameter("@conteudo",
+                string.IsNullOrWhiteSpace(entidade.Conteudo) ? DBNull.Value : entidade.Conteudo.Trim()));
             codigo = Convert.ToInt32(comando.ExecuteScalar());
         }
 
@@ -35,10 +61,12 @@ public class RepositorioEncontro : RepositorioAbstrato<Encontro>, IRepositorioEn
         using var transacao = conexao.BeginTransaction();
 
         using (var comando = new NpgsqlCommand(
-            "UPDATE TBENCONTRO SET ENCDATA = @data WHERE ENCCODIGO = @codigo",
+            "UPDATE TBENCONTRO SET ENCDATA = @data, ENCCONTEUDO = @conteudo WHERE ENCCODIGO = @codigo",
             conexao, transacao))
         {
             comando.Parameters.Add(new NpgsqlParameter("@data",   ParaInteiro(entidade.Data)));
+            comando.Parameters.Add(new NpgsqlParameter("@conteudo",
+                string.IsNullOrWhiteSpace(entidade.Conteudo) ? DBNull.Value : entidade.Conteudo.Trim()));
             comando.Parameters.Add(new NpgsqlParameter("@codigo", entidade.Codigo));
             comando.ExecuteNonQuery();
         }
@@ -76,45 +104,47 @@ public class RepositorioEncontro : RepositorioAbstrato<Encontro>, IRepositorioEn
     public override IEnumerable<Encontro> ObterTodos()
     {
         return Consultar(
-            @"SELECT e.ENCCODIGO, e.ENCDATA, t.TURMCODIGO, t.TURMNOME, t.TURMAANO,
+            @"SELECT e.ENCCODIGO, e.ENCDATA, e.ENCCONTEUDO, t.TURMCODIGO, t.TURMNOME, t.TURMAANO,
                      COUNT(p.ALUNMATRICULA) AS TOTAL,
                      COALESCE(SUM(p.PRESENTE), 0) AS PRESENTES
                 FROM TBENCONTRO e
                 INNER JOIN TBTURMA t ON t.TURMCODIGO = e.ENCTURMA
                 LEFT JOIN TBENCPRESENCA p ON p.ENCCODIGO = e.ENCCODIGO
-               GROUP BY e.ENCCODIGO, e.ENCDATA, t.TURMCODIGO, t.TURMNOME, t.TURMAANO
+               GROUP BY e.ENCCODIGO, e.ENCDATA, e.ENCCONTEUDO, t.TURMCODIGO, t.TURMNOME, t.TURMAANO
                ORDER BY e.ENCDATA DESC, e.ENCCODIGO DESC",
             reader => new Encontro
             {
-                Codigo = reader.GetInt32(0),
-                Data   = ConverterData(reader.GetInt32(1)),
-                Turma  = new Turma
+                Codigo   = reader.GetInt32(0),
+                Data     = ConverterData(reader.GetInt32(1)),
+                Conteudo = reader.IsDBNull(2) ? null : reader.GetString(2),
+                Turma    = new Turma
                 {
-                    Codigo = reader.GetInt32(2),
-                    Nome   = reader.GetString(3),
-                    Ano    = reader.GetInt32(4)
+                    Codigo = reader.GetInt32(3),
+                    Nome   = reader.GetString(4),
+                    Ano    = reader.GetInt32(5)
                 },
-                TotalAlunos    = reader.GetInt32(5),
-                TotalPresentes = reader.GetInt32(6)
+                TotalAlunos    = reader.GetInt32(6),
+                TotalPresentes = reader.GetInt32(7)
             });
     }
 
     public Encontro? GetByCodigo(int codigo)
     {
         var encontro = Consultar(
-            @"SELECT e.ENCCODIGO, e.ENCDATA, t.TURMCODIGO, t.TURMNOME, t.TURMAANO
+            @"SELECT e.ENCCODIGO, e.ENCDATA, e.ENCCONTEUDO, t.TURMCODIGO, t.TURMNOME, t.TURMAANO
                 FROM TBENCONTRO e
                 INNER JOIN TBTURMA t ON t.TURMCODIGO = e.ENCTURMA
                WHERE e.ENCCODIGO = @codigo",
             reader => new Encontro
             {
-                Codigo = reader.GetInt32(0),
-                Data   = ConverterData(reader.GetInt32(1)),
-                Turma  = new Turma
+                Codigo   = reader.GetInt32(0),
+                Data     = ConverterData(reader.GetInt32(1)),
+                Conteudo = reader.IsDBNull(2) ? null : reader.GetString(2),
+                Turma    = new Turma
                 {
-                    Codigo = reader.GetInt32(2),
-                    Nome   = reader.GetString(3),
-                    Ano    = reader.GetInt32(4)
+                    Codigo = reader.GetInt32(3),
+                    Nome   = reader.GetString(4),
+                    Ano    = reader.GetInt32(5)
                 }
             },
             p => p.Add(new NpgsqlParameter("@codigo", codigo))).FirstOrDefault();

@@ -11,6 +11,10 @@ public class Encontro : IEntidade
     public int Codigo { get; set; }
     public Turma Turma { get; set; }
     public DateTime Data { get; set; }
+
+    /// <summary>Conteúdo trabalhado no encontro (lançamento de conteúdo).</summary>
+    public string? Conteudo { get; set; }
+
     public List<PresencaAluno> Presencas { get; set; } = new();
 
     /// <summary>Total de alunos na lista (preenchido nas listagens).</summary>

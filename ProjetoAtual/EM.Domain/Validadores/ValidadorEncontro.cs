@@ -16,6 +16,9 @@ public static class ValidadorEncontro
         if (encontro.Presencas.Count == 0)
             return ResultadoValidacao.Erro("A turma não possui alunos para registrar presença.");
 
+        if (encontro.Conteudo?.Trim().Length > 500)
+            return ResultadoValidacao.Erro("Conteúdo deve ter no máximo 500 caracteres.");
+
         return ResultadoValidacao.Ok();
     }
 }

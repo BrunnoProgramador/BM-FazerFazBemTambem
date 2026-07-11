@@ -34,6 +34,7 @@
             <tr>
                 <th>Data</th>
                 <th>Turma</th>
+                <th>Conteúdo</th>
                 <th>Presença</th>
                 <th>Percentual</th>
                 <th class="col-acoes">Ações</th>
@@ -47,6 +48,16 @@
                     <tr data-turma="@e.TurmaNome" data-data="@e.Data.ToString("yyyy-MM-dd")">
                         <td>@e.Data.ToString("dd/MM/yyyy")</td>
                         <td>@e.TurmaNome</td>
+                        <td title="@e.Conteudo">
+                            @if (string.IsNullOrWhiteSpace(e.Conteudo))
+                            {
+                                <text>—</text>
+                            }
+                            else
+                            {
+                                @(e.Conteudo.Length > 60 ? e.Conteudo[..60] + "…" : e.Conteudo)
+                            }
+                        </td>
                         <td>@e.TotalPresentes de @e.TotalAlunos</td>
                         <td>
                             <span class="badge-suave @(e.Percentual >= 70 ? "badge-verde" : "badge-cinza")">
@@ -58,17 +69,20 @@
                                class="btn-icone" title="Editar presença">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <button type="button" class="btn-icone perigo btn-excluir-encontro"
-                                    title="Excluir registro"
-                                    data-url="@Url.Action("Excluir", "Encontro", new { id = e.Codigo })"
-                                    data-info="@e.TurmaNome em @e.Data.ToString("dd/MM/yyyy")">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            @if (User.HasClaim("admin", "1"))
+                            {
+                                <button type="button" class="btn-icone perigo btn-excluir-encontro"
+                                        title="Excluir registro"
+                                        data-url="@Url.Action("Excluir", "Encontro", new { id = e.Codigo })"
+                                        data-info="@e.TurmaNome em @e.Data.ToString("dd/MM/yyyy")">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }
                 <tr id="linhaVazia" class="d-none">
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="estado-vazio py-4">
                             <p class="mb-0">Nenhum encontro corresponde aos filtros.</p>
                         </div>
@@ -78,7 +92,7 @@
             else
             {
                 <tr>
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="estado-vazio">
                             <i class="bi bi-check2-square"></i>
                             <p>Nenhuma frequência registrada ainda.</p>

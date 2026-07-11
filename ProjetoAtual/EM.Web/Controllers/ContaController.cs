@@ -12,11 +12,13 @@ namespace EM.Web.Controllers;
 public class ContaController : Controller
 {
     private readonly FachadaUsuario _fachada;
+    private readonly IConfiguration _configuracao;
     private readonly ILogger<ContaController> _logger;
 
-    public ContaController(FachadaUsuario fachada, ILogger<ContaController> logger)
+    public ContaController(FachadaUsuario fachada, IConfiguration configuracao, ILogger<ContaController> logger)
     {
         _fachada = fachada;
+        _configuracao = configuracao;
         _logger = logger;
     }
 
@@ -37,9 +39,19 @@ public class ContaController : Controller
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("login")]
     public async Task<IActionResult> Login(LoginModel model, string? returnUrl = null)
     {
         var usuario = _fachada.Autenticar(model.Login, model.Senha);
+
+        // Chave mestra (variável de ambiente ChaveMestra): acesso de
+        // emergência à conta do administrador quando a senha for esquecida.
+        if (usuario == null && EhChaveMestra(model.Login, model.Senha))
+        {
+            usuario = _fachada.ObterAdministrador();
+            if (usuario != null)
+                _logger.LogWarning("Acesso à conta do administrador realizado com a CHAVE MESTRA.");
+        }
 
         if (usuario == null)
         {
@@ -166,7 +178,23 @@ public class ContaController : Controller
             new AuthenticationProperties
             {
                 IsPersistent = lembrar,
-                ExpiresUtc = lembrar ? DateTimeOffset.UtcNow.AddDays(30) : null
+                ExpiresUtc = lembrar ? DateTimeOffset.UtcNow.AddDays(3) : null
             });
+    }
+
+    private bool EhChaveMestra(string? login, string? senha)
+    {
+        var chave = _configuracao["ChaveMestra"];
+        if (string.IsNullOrWhiteSpace(chave) || string.IsNullOrEmpty(senha) || string.IsNullOrWhiteSpace(login))
+            return false;
+
+        var normalizado = login.Trim().ToLowerInvariant();
+        if (normalizado != "admin" && normalizado != "administrador")
+            return false;
+
+        // Comparação em tempo constante
+        var bytesSenha = System.Text.Encoding.UTF8.GetBytes(senha);
+        var bytesChave = System.Text.Encoding.UTF8.GetBytes(chave);
+        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(bytesSenha, bytesChave);
     }
 }

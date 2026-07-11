@@ -46,12 +46,15 @@
                                class="btn-icone" title="Editar doação">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <button type="button" class="btn-icone perigo btn-excluir-doacao"
-                                    title="Excluir doação"
-                                    data-url="@Url.Action("Excluir", "Doacao", new { id = d.Codigo })"
-                                    data-nome="@d.Item">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            @if (User.HasClaim("admin", "1"))
+                            {
+                                <button type="button" class="btn-icone perigo btn-excluir-doacao"
+                                        title="Excluir doação"
+                                        data-url="@Url.Action("Excluir", "Doacao", new { id = d.Codigo })"
+                                        data-nome="@d.Item">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }

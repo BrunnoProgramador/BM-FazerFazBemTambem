@@ -7,8 +7,10 @@ namespace EM.Repository;
 
 public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
 {
+    // CPF removido do sistema (minimização de dados — LGPD);
+    // a coluna ALUNCPF permanece no banco, mas não é lida nem gravada.
     private const string ColunasAluno =
-        "ALUNMATRICULA, ALUNNOME, ALUNCPF, ALUNDTNASC, ALUNSEXO, " +
+        "ALUNMATRICULA, ALUNNOME, ALUNDTNASC, ALUNSEXO, " +
         "ALUNCIDADETXT, ALUNBAIRRO, ALUNRESPNOME, ALUNRESPTEL, ALUNRESPPAR, ALUNSTATUS";
 
     public RepositorioAluno(string connectionString) : base(connectionString) { }
@@ -16,9 +18,9 @@ public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
     public int Adicionar(Aluno entidade)
     {
         var matricula = ExecutarEscalar(
-            "INSERT INTO TBALUNO (ALUNMATRICULA, ALUNNOME, ALUNCPF, ALUNDTNASC, ALUNSEXO, " +
+            "INSERT INTO TBALUNO (ALUNMATRICULA, ALUNNOME, ALUNDTNASC, ALUNSEXO, " +
             "ALUNCIDADETXT, ALUNBAIRRO, ALUNRESPNOME, ALUNRESPTEL, ALUNRESPPAR, ALUNSTATUS) " +
-            "VALUES (nextval('gen_tbaluno'), @nome, @cpf, @dtnasc, @sexo, " +
+            "VALUES (nextval('gen_tbaluno'), @nome, @dtnasc, @sexo, " +
             "@cidade, @bairro, @respnome, @resptel, @resppar, @status) " +
             "RETURNING ALUNMATRICULA",
             p => PreencherParametros(p, entidade));
@@ -29,7 +31,7 @@ public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
     public override void Atualizar(Aluno entidade)
     {
         ExecutarComando(
-            "UPDATE TBALUNO SET ALUNNOME = @nome, ALUNCPF = @cpf, ALUNDTNASC = @dtnasc, " +
+            "UPDATE TBALUNO SET ALUNNOME = @nome, ALUNDTNASC = @dtnasc, " +
             "ALUNSEXO = @sexo, ALUNCIDADETXT = @cidade, ALUNBAIRRO = @bairro, " +
             "ALUNRESPNOME = @respnome, ALUNRESPTEL = @resptel, ALUNRESPPAR = @resppar, " +
             "ALUNSTATUS = @status WHERE ALUNMATRICULA = @matricula",
@@ -198,7 +200,6 @@ public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
     private static void PreencherParametros(NpgsqlParameterCollection p, Aluno entidade)
     {
         p.Add(new NpgsqlParameter("@nome",     entidade.Nome));
-        p.Add(new NpgsqlParameter("@cpf",      (object?)entidade.CPF ?? DBNull.Value));
         p.Add(new NpgsqlParameter("@dtnasc",   int.Parse(entidade.Nascimento.ToString("yyyyMMdd"))));
         p.Add(new NpgsqlParameter("@sexo",     entidade.Sexo.Codigo));
         p.Add(new NpgsqlParameter("@cidade",   ValorOuNulo(entidade.Cidade)));
@@ -216,15 +217,14 @@ public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
     {
         Matricula             = reader.GetInt32(0),
         Nome                  = reader.GetString(1),
-        CPF                   = reader.IsDBNull(2) ? null : reader.GetString(2),
-        Nascimento            = ConverterData(reader.GetInt32(3)),
-        Sexo                  = EnumeradorSexo.ObtenhaPorCodigo(reader.GetInt32(4)),
-        Cidade                = reader.IsDBNull(5) ? null : reader.GetString(5),
-        Bairro                = reader.IsDBNull(6) ? null : reader.GetString(6),
-        ResponsavelNome       = reader.IsDBNull(7) ? null : reader.GetString(7),
-        ResponsavelTelefone   = reader.IsDBNull(8) ? null : reader.GetString(8),
-        ResponsavelParentesco = reader.IsDBNull(9) ? null : reader.GetString(9),
-        Status                = EnumeradorStatusAluno.ObtenhaPorCodigo(reader.GetInt32(10))
+        Nascimento            = ConverterData(reader.GetInt32(2)),
+        Sexo                  = EnumeradorSexo.ObtenhaPorCodigo(reader.GetInt32(3)),
+        Cidade                = reader.IsDBNull(4) ? null : reader.GetString(4),
+        Bairro                = reader.IsDBNull(5) ? null : reader.GetString(5),
+        ResponsavelNome       = reader.IsDBNull(6) ? null : reader.GetString(6),
+        ResponsavelTelefone   = reader.IsDBNull(7) ? null : reader.GetString(7),
+        ResponsavelParentesco = reader.IsDBNull(8) ? null : reader.GetString(8),
+        Status                = EnumeradorStatusAluno.ObtenhaPorCodigo(reader.GetInt32(9))
     };
 
     private static DateTime ConverterData(int dataYyyyMmDd) =>
@@ -232,8 +232,10 @@ public class RepositorioAluno : RepositorioAbstrato<Aluno>, IRepositorioAluno
 
     private static bool TabelaExiste(NpgsqlConnection conexao, NpgsqlTransaction transacao, string nome)
     {
+        // information_schema é o catálogo do Postgres (a consulta antiga
+        // usava RDB$RELATIONS, que é do Firebird, e quebraria aqui)
         using var comando = new NpgsqlCommand(
-            "SELECT COUNT(*) FROM RDB$RELATIONS WHERE RDB$RELATION_NAME = @nome",
+            "SELECT COUNT(*) FROM information_schema.tables WHERE UPPER(table_name) = UPPER(@nome)",
             conexao, transacao);
         comando.Parameters.Add(new NpgsqlParameter("@nome", nome));
         return Convert.ToInt32(comando.ExecuteScalar()) > 0;

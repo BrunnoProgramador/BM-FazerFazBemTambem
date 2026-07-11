@@ -6,6 +6,7 @@ public class EncontroModel
     public int TurmaCodigo { get; set; }
     public string? TurmaNome { get; set; }
     public DateTime Data { get; set; }
+    public string? Conteudo { get; set; }
     public int TotalAlunos { get; set; }
     public int TotalPresentes { get; set; }
     public List<PresencaModel> Presencas { get; set; } = new();

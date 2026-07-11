@@ -65,11 +65,14 @@
                        class="btn-icone" title="Editar turma">
                         <i class="bi bi-pencil"></i>
                     </a>
-                    <button type="button" class="btn-icone perigo btn-excluir-turma" title="Excluir turma"
-                            data-url="@Url.Action("Excluir", "Turma", new { id = t.Codigo })"
-                            data-nome="@t.Nome">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    @if (User.HasClaim("admin", "1"))
+                    {
+                        <button type="button" class="btn-icone perigo btn-excluir-turma" title="Excluir turma"
+                                data-url="@Url.Action("Excluir", "Turma", new { id = t.Codigo })"
+                                data-nome="@t.Nome">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    }
                 </div>
             </div>
         }

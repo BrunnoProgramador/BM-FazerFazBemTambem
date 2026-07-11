@@ -64,37 +64,6 @@ public class ValidadorAlunoTestes
         Assert.False(aluno.Validar().Valido);
     }
 
-    [Theory]
-    [InlineData("529.982.247-25")] // CPF válido com máscara
-    [InlineData("52998224725")]    // CPF válido sem máscara
-    [InlineData("111.444.777-35")] // CPF válido
-    public void Cpf_valido_passa(string cpf)
-    {
-        var aluno = AlunoValido();
-        aluno.CPF = cpf;
-        Assert.True(aluno.Validar().Valido);
-    }
-
-    [Theory]
-    [InlineData("111.111.111-11")] // dígitos repetidos
-    [InlineData("123.456.789-00")] // dígito verificador errado
-    [InlineData("529.982.247-24")] // último dígito alterado
-    [InlineData("1234567890")]     // menos de 11 dígitos
-    public void Cpf_invalido_falha(string cpf)
-    {
-        var aluno = AlunoValido();
-        aluno.CPF = cpf;
-        Assert.False(aluno.Validar().Valido);
-    }
-
-    [Fact]
-    public void Cpf_vazio_eh_permitido()
-    {
-        var aluno = AlunoValido();
-        aluno.CPF = null;
-        Assert.True(aluno.Validar().Valido);
-    }
-
     [Fact]
     public void Cidade_e_bairro_sao_opcionais()
     {

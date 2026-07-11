@@ -47,6 +47,26 @@ public class UsuarioController : Controller
         }
     }
 
+    /// <summary>Gera senha provisória para quem esqueceu — troca obrigatória no login.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ResetarSenha(int id)
+    {
+        try
+        {
+            var provisoria = _fachada.ResetarSenha(id);
+            var usuario = _fachada.ObterTodos().First(u => u.Codigo == id);
+            _logger.LogInformation("Senha do usuário {Login} redefinida pelo administrador.", usuario.Login);
+            TempData["Sucesso"] = $"Senha de \"{usuario.Login}\" redefinida. " +
+                $"Senha provisória: {provisoria} — informe à pessoa; ela trocará no primeiro acesso.";
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["Erro"] = ex.Message;
+        }
+        return RedirectToAction("Index");
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Excluir(int id)

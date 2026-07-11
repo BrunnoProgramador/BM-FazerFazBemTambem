@@ -39,6 +39,36 @@ public class FachadaUsuario
 
     public bool ExisteUsuario() => _repositorio.Contar() > 0;
 
+    /// <summary>O usuário administrador do sistema (usado pela chave mestra).</summary>
+    public Usuario? ObterAdministrador() => _repositorio.ObterAdministrador();
+
+    /// <summary>
+    /// Redefine a senha de um usuário comum com uma provisória aleatória
+    /// (troca obrigatória no próximo login). Retorna a senha gerada.
+    /// </summary>
+    public string ResetarSenha(int codigo)
+    {
+        var usuario = _repositorio.GetByCodigo(codigo)
+            ?? throw new ArgumentException("Usuário não encontrado.");
+
+        if (usuario.EhAdministrador)
+            throw new ArgumentException("A senha do administrador não é redefinida por aqui.");
+
+        var provisoria = GerarSenhaProvisoria();
+        usuario.Hash = GeradorHashSenha.Gerar(provisoria);
+        usuario.DeveTrocarSenha = true;
+        _repositorio.Atualizar(usuario);
+        return provisoria;
+    }
+
+    private static string GerarSenhaProvisoria()
+    {
+        // Sem caracteres ambíguos (0/O, 1/l/I) para ditar por telefone
+        const string alfabeto = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(10);
+        return new string(bytes.Select(b => alfabeto[b % alfabeto.Length]).ToArray());
+    }
+
     public List<Usuario> ObterTodos() => _repositorio.ObterTodos().ToList();
 
     /// <summary>

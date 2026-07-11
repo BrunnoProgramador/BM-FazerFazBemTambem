@@ -55,6 +55,12 @@
                             <td class="col-acoes">
                                 @if (!u.EhAdministrador)
                                 {
+                                    <button type="button" class="btn-icone btn-resetar-senha"
+                                            title="Redefinir senha (gera provisória)"
+                                            data-url="@Url.Action("ResetarSenha", "Usuario", new { id = u.Codigo })"
+                                            data-nome="@u.Login">
+                                        <i class="bi bi-key"></i>
+                                    </button>
                                     <button type="button" class="btn-icone perigo btn-excluir-usuario"
                                             title="Excluir usuário"
                                             data-url="@Url.Action("Excluir", "Usuario", new { id = u.Codigo })"
@@ -122,5 +128,11 @@
             btn.addEventListener("click", () =>
                 confirmarPost(btn.dataset.url,
                     `Excluir o usuário "${btn.dataset.nome}"? A pessoa perde o acesso ao sistema.`)));
+
+        document.querySelectorAll(".btn-resetar-senha").forEach(btn =>
+            btn.addEventListener("click", () =>
+                confirmarPost(btn.dataset.url,
+                    `Redefinir a senha de "${btn.dataset.nome}"? A senha atual deixa de funcionar ` +
+                    "e uma provisória será mostrada para você repassar.")));
     </script>
 }
